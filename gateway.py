@@ -15,7 +15,7 @@ import socket
 import threading
 import time
 from urllib.parse import parse_qs, urlsplit
-from views import login_page, panel_page, users_page
+from views import login_page, panel_page, users_page, password_page
 from install import VERSION
 
 COOKIE = 'codynick_multi_session'
@@ -82,8 +82,8 @@ def csrf_token(token):
     return hashlib.sha256(('admin-users:' + token).encode()).hexdigest()
 
 
-def create_student(actor, name, password):
-    request = dict(action='add-student', actor=actor, username=name, password=password)
+def account_request(actor, name, password, action='add-student', current_password=''):
+    request = dict(action=action, actor=actor, username=name, password=password, current_password=current_password)
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
         client.settimeout(60)
         client.connect('/run/codynick-multi-admin.sock')
@@ -136,7 +136,7 @@ def handler(sessions):
         def process(self):
             try:
                 path = urlsplit(self.path).path
-                body = self.body(8192 if path in ('/login', '/logout', '/admin/users') else 52 * 1024 * 1024)
+                body = self.body(8192 if path in ('/login', '/logout', '/admin/users', '/admin/password', '/account/password') else 52 * 1024 * 1024)
                 if self.command == 'POST':
                     origin = self.headers.get('Origin')
                     if self.headers.get('Sec-Fetch-Site') == 'cross-site' or (
@@ -150,7 +150,7 @@ def handler(sessions):
                     return self.send(200, (ROOT / asset).read_bytes(), kind)
                 if path == '/login':
                     if self.command in ('GET', 'HEAD'):
-                        return self.send(200, login_page())
+                        return self.send(200, login_page(changed=parse_qs(urlsplit(self.path).query).get('changed') == ['1']))
                     form = parse_qs(body.decode('utf-8'))
                     token = sessions.login(form.get('username', [''])[0].strip(), form.get('password', [''])[0])
                     if token is None:
@@ -165,6 +165,31 @@ def handler(sessions):
                 if account is None:
                     return self.send(303, headers=[('Location', '/login')])
                 name, settings = account
+                if path in ('/admin/password', '/account/password'):
+                    reset = path == '/admin/password'
+                    if reset and settings.get('role') != 'admin':
+                        return self.send(403, 'Administrator account required.')
+                    target = parse_qs(urlsplit(self.path).query).get('user', [''])[0] if reset else name
+                    if target not in sessions.accounts():
+                        return self.send(404, 'Unknown account.')
+                    csrf = csrf_token(self.token())
+                    if self.command == 'POST':
+                        form = parse_qs(body.decode('utf-8'))
+                        if not hmac.compare_digest(form.get('csrf', [''])[0], csrf):
+                            return self.send(403, 'Please reload the password page and try again.')
+                        password = form.get('password', [''])[0]
+                        if password != form.get('confirm', [''])[0]:
+                            return self.send(400, password_page(name, target, csrf, reset, 'Passwords do not match.'))
+                        result = account_request(name, target, password,
+                            action='reset-password' if reset else 'change-password',
+                            current_password=form.get('current_password', [''])[0])
+                        if not result.get('ok'):
+                            return self.send(400, password_page(name, target, csrf, reset, result.get('error', 'Password change failed.')))
+                        if target == name:
+                            sessions.logout(self.token())
+                            return self.send(303, headers=[('Location', '/login?changed=1'), ('Set-Cookie', f'{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict')])
+                        return self.send(303, headers=[('Location', '/admin/users?updated=' + target)])
+                    return self.send(200, password_page(name, target, csrf, reset))
                 if path == '/admin/users':
                     if settings.get('role') != 'admin':
                         return self.send(403, 'Administrator account required.')
@@ -177,12 +202,13 @@ def handler(sessions):
                         username = form.get('username', [''])[0].strip()
                         if password != form.get('confirm', [''])[0]:
                             return self.send(400, users_page(name, sessions.accounts(), csrf, error='Passwords do not match.'))
-                        result = create_student(name, username, password)
+                        result = account_request(name, username, password)
                         if not result.get('ok'):
                             return self.send(400, users_page(name, sessions.accounts(), csrf, error=result.get('error', 'Account setup failed.')))
                         return self.send(303, headers=[('Location', '/admin/users?created=' + username)])
                     created = parse_qs(urlsplit(self.path).query).get('created', [''])[0]
-                    return self.send(200, users_page(name, sessions.accounts(), csrf, created=created))
+                    updated = parse_qs(urlsplit(self.path).query).get('updated', [''])[0]
+                    return self.send(200, users_page(name, sessions.accounts(), csrf, created=created, updated=updated))
                 if path == '/':
                     return self.send(200, panel_page(name, settings.get('role', 'student'), VERSION))
                 self.proxy(8100 + settings['slot'], body)

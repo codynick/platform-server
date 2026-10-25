@@ -1,4 +1,4 @@
-# CodyNick Multi-user 0.1.2
+# CodyNick Multi-user 0.1.3
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
@@ -12,10 +12,10 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.2: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.3: READY`.
 
 ```bash
-sudo tail -n 80 -f /var/log/codynick-multi/install.log
+sudo tail -n 80 -F /var/log/codynick-multi/install.log
 sudo codynick-multi-user status
 sudo codynick-multi-user list
 ```
@@ -36,7 +36,11 @@ after successful creation. The existing teacher session stays signed in.
 On upgrade from 0.1.0/0.1.1, the first-created account becomes Administrator;
 existing other accounts become Students. All passwords and files are retained.
 Only administrators can open Users or create students through the web interface.
-There is no web account deletion, role editing or password-reset interface yet.
+To reset a password, choose **Reset** in that user's row of the Users table.
+Any user can choose **Change Password** on the main panel to update their own
+password after entering the current password. Changed accounts must sign in again;
+password changes do not restart their Python script. Use HTTPS, an SSH tunnel or
+a trusted private connection for passwords. There is no web account deletion or role editing yet.
 The original SSH commands still work:
 
 ```bash
@@ -109,7 +113,7 @@ HTTPS, per-user Linux identities and multi-tenant AI are outside this version.
 `python -m unittest discover -s tests` checks generation, preserved data and process
 separation. Linux CI also lints PHP and tests real independent process groups.
 `python tools/seal.py` regenerates the release file hashes. Publish immutable tag
-`v0.1.2-web-users` with main. Never move a published tag; make a new release.
+`v0.1.3-web-passwords` with main. Never move a published tag; make a new release.
 Keep the fixed command unchanged on later versions. Older source directories are
 retained; automated downgrade selection is not implemented in this initial edition.
 
@@ -131,3 +135,11 @@ Linux-identity limitation remains. The main panel now uses the original RPi pane
 CodyNick logo, blue/white styling and tool-card layout, with correct account, role
 and release information. New-listener health checks wait for Apache reload readiness
 instead of reporting a transient Connection Refused traceback.
+
+## Changes in 0.1.3
+
+Web administrator password resets and current-password-verified self-service changes,
+with confirmation, CSRF protection and affected-session invalidation. Authentication
+refresh no longer restarts a user's program, including terminal password changes.
+The installer creates its log file before launching the background worker and uses
+retrying log follow, avoiding the first-install "No such file" display race.

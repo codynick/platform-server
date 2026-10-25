@@ -8,14 +8,21 @@ import install
 
 
 def dispatch(request):
-    if not isinstance(request, dict) or request.get('action') != 'add-student':
-        raise ValueError('Only adding students is supported.')
+    if not isinstance(request, dict) or request.get('action') not in ('add-student', 'reset-password', 'change-password'):
+        raise ValueError('Unsupported account action.')
     actor = request.get('actor', '')
     name = request.get('username', '')
     password = request.get('password', '')
     if not all(isinstance(x, str) for x in (actor, name, password)):
         raise ValueError('Invalid account fields.')
-    install.add_student(actor, name, password)
+    if request['action'] == 'add-student':
+        install.add_student(actor, name, password)
+    else:
+        current = request.get('current_password', '')
+        if not isinstance(current, str):
+            raise ValueError('Invalid password field.')
+        install.change_password(actor, name, password, current,
+                                reset=request['action'] == 'reset-password')
     return {'ok': True, 'username': name}
 
 

@@ -111,6 +111,41 @@ assert (student + ' added.').encode() in out, out
 assert student.encode() in request(80, '/', student)
 assert b'/admin/users' not in request(80, '/', student)
 assert b'alice' in request(80, '/', 'alice'), 'Adding a student signed out the teacher'
+# Self-service password change checks the old password and ignores forged targets.
+page = request(80, '/account/password', student).decode()
+own_csrf = re.search(r'name="csrf" value="([a-f0-9]+)"', page).group(1)
+try:
+    request(80, '/admin/password?user=alice', student)
+except urllib.error.HTTPError as error:
+    assert error.code == 403
+else:
+    raise AssertionError('Student opened administrator reset')
+try:
+    request(80, '/account/password', student, {'csrf':own_csrf, 'current_password':'wrong', 'password':'ChangedPassword123', 'confirm':'ChangedPassword123'})
+except urllib.error.HTTPError as error:
+    assert error.code == 400
+else:
+    raise AssertionError('Incorrect current password accepted')
+out = request(80, '/account/password?user=alice', student, {'csrf':own_csrf, 'current_password':PASSWORD, 'password':'ChangedPassword123', 'confirm':'ChangedPassword123'})
+assert b'Password changed. Sign in again.' in out
+try:
+    login(student)
+except urllib.error.HTTPError as error:
+    assert error.code == 401
+else:
+    raise AssertionError('Old password still accepted')
+CLIENTS[student] = login(student, 'ChangedPassword123')
+# Administrator reset invalidates just that user's sessions and leaves programs running.
+page = request(80, '/admin/password?user=' + student, 'alice').decode()
+admin_csrf = re.search(r'name="csrf" value="([a-f0-9]+)"', page).group(1)
+before = (DATA / 'bob/log.log').read_text()
+out = request(80, '/admin/password?user=' + student, 'alice', {'csrf':admin_csrf,'password':PASSWORD,'confirm':PASSWORD})
+assert ('Password updated for ' + student).encode() in out
+assert b'Username' in request(80, '/', student)
+CLIENTS[student] = login(student)
+time.sleep(1.2)
+assert len((DATA / 'bob/log.log').read_text()) > len(before)
+assert b'alice' in request(80, '/', 'alice')
 assert b'Username' in request(80, '/logout', 'alice', {})
 assert b'Username' in request(80, '/code/', 'alice')
 assert b'bob' in request(80, '/', 'bob')

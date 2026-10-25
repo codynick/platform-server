@@ -8,6 +8,8 @@ const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
   try {
     const page = await browser.newPage();
     const pages = {menu: execFileSync('python',['-c','import install; print(install.page("teacher","admin"))'],{cwd:root,encoding:'utf8'}),login: execFileSync('python',['-c','import gateway; print(gateway.login_page())'],{cwd:root,encoding:'utf8'}),users:execFileSync('python',['-c','import views; print(views.users_page("teacher",{"teacher":{"slot":0,"role":"admin"},"student1":{"slot":1,"role":"student"}},"test"))'],{cwd:root,encoding:'utf8'})};
+    pages.password=execFileSync('python',['-c','import views; print(views.password_page("student1","student1","test"))'],{cwd:root,encoding:'utf8'});
+    pages.reset=execFileSync('python',['-c','import views; print(views.password_page("teacher","student1","test",reset=True))'],{cwd:root,encoding:'utf8'});
     let current = '';
     await page.route('http://preview.local/**',route=> {
       const url=new URL(route.request().url());

@@ -18,6 +18,28 @@ from runner import Programs
 
 
 class WorkspaceTests(unittest.TestCase):
+    def test_log_file_exists_before_worker_launch(self):
+        setup = (ROOT / 'setup.sh').read_text()
+        self.assertLess(setup.index('touch /var/log/codynick-multi/install.log'), setup.index('systemd-run'))
+        self.assertIn('tail -n 30 -F', setup)
+
+    def test_password_changes_check_permissions_without_restarting_scripts(self):
+        from contextlib import nullcontext
+        saved = {'teacher': {'slot': 0, 'role': 'admin', 'hash': 'adminhash'},
+                 'bob': {'slot': 1, 'role': 'student', 'hash': 'oldhash'}}
+        with patch('install.accounts_lock', nullcontext), patch('install.accounts', return_value=saved), patch('install.save_accounts'), patch('install.sync_gateway_accounts') as sync, patch('install.configure_account') as provision, patch('install.encode_password', return_value='newhash'), patch('gateway.verify_password', return_value=False):
+            with self.assertRaises(PermissionError):
+                install.change_password('bob', 'teacher', 'password123', reset=True)
+            with self.assertRaises(PermissionError):
+                install.change_password('bob', 'bob', 'password123', 'wrong')
+            with self.assertRaises(PermissionError):
+                install.change_password('bob', 'teacher', 'password123', 'anything')
+            install.change_password('teacher', 'bob', 'password123', reset=True)
+            self.assertEqual(saved['bob']['hash'], 'newhash')
+            self.assertEqual(saved['teacher']['hash'], 'adminhash')
+            provision.assert_not_called()
+            sync.assert_called_once()
+
     def test_role_migration_uses_first_account(self):
         saved = {'student1': {'slot': 1}, 'teacher': {'slot': 0}}
         install.migrate_roles(saved)

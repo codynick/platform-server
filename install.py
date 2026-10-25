@@ -18,7 +18,7 @@ import time
 import urllib.request
 import urllib.error
 
-VERSION = '0.1.2'
+VERSION = '0.1.3'
 SOURCE = Path(__file__).resolve().parent
 CONFIG = Path('/etc/codynick-multi')
 DATA = Path('/var/lib/codynick-multi')
@@ -267,11 +267,15 @@ ErrorLog ${{APACHE_LOG_DIR}}/codynick-multi-{name}.log
     return port
 
 
-def configure_gateway(restart=False):
+def sync_gateway_accounts():
     saved = {name: {'slot': account['slot'], 'hash': account['hash'], 'role': account.get('role', 'student')}
              for name, account in accounts().items()}
     write(DATA / 'gateway-accounts.json', json.dumps(saved), 0o640)
     run('chown', 'root:www-data', DATA / 'gateway-accounts.json')
+
+
+def configure_gateway(restart=False):
+    sync_gateway_accounts()
     unit = f'''[Unit]
 Description=CodyNick shared login router
 After=network.target
@@ -351,6 +355,7 @@ UMask=0077
 
 def install():
     state('installing')
+    print(f'CodyNick Multi-user {VERSION}: INSTALLING', flush=True)
     try:
         prepare()
         run('apt-get', '-o', 'DPkg::Lock::Timeout=600', '-o', 'Acquire::Retries=5', 'update')
@@ -457,6 +462,23 @@ def add_student(actor, name, password):
         finish_account(name, settings)
 
 
+def change_password(actor, target, password, current_password='', reset=False):
+    from gateway import verify_password
+    with accounts_lock():
+        saved = accounts()
+        if actor not in saved or target not in saved:
+            raise ValueError('Unknown account.')
+        if reset:
+            if saved[actor].get('role') != 'admin':
+                raise PermissionError('Administrator account required.')
+        elif actor != target or not verify_password(current_password, saved[actor]['hash']):
+            raise PermissionError('Current password is incorrect.')
+        saved[target]['hash'] = encode_password(password)
+        save_accounts(saved)
+        # Authentication only: do not restart or reprovision the user's program.
+        sync_gateway_accounts()
+
+
 def verify(root):
     manifest = json.loads((root / 'release.json').read_text())
     for relative, digest in manifest['files'].items():
@@ -496,7 +518,10 @@ def main():
                     raise ValueError('Unknown account')
                 saved[name]['hash'] = password_hash()
             save_accounts(saved)
-            finish_account(name, saved[name])
+            if args.action == 'passwd':
+                sync_gateway_accounts()
+            else:
+                finish_account(name, saved[name])
         print('Account ready: http://<device-IP>/ (shared login)')
 
 
