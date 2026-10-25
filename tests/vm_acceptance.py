@@ -36,7 +36,7 @@ for port, name in ((8100, 'alice'), (8101, 'bob')):
     else:
         raise AssertionError('Wrong account accepted')
     # Real PHP -> Unix socket -> independent Python process.
-    code = f'import time\nimport Dashboard\nDashboard.clear()\nc=Dashboard.Card("info","{name}",value="{name}")\nprint("{name}",flush=True)\ntime.sleep(90)\n'
+    code = f'import time\nimport Dashboard\nDashboard.clear()\nc=Dashboard.Card("info","{name}",value="{name}")\nfor i in range(90):\n    print("{name}",i,flush=True)\n    time.sleep(1)\n'
     assert json.loads(request(port, '/code/?action=run', name, {'content': code}))['ok']
     assert json.loads(request(port, '/blocks/designs.php?action=save', name,
            {'name': 'same-name', 'overwrite': True, 'workspace': {'blocks': {'languageVersion': 0}, 'test_owner': name}}, True))['ok']
@@ -51,7 +51,9 @@ for port, name in ((8100, 'alice'), (8101, 'bob')):
     assert other not in json.dumps(cards), cards
 
 assert json.loads(request(8100, '/code/?action=stop', 'alice', {}))['ok']
-assert 'bob' in (DATA / 'bob/log.log').read_text()
+before = (DATA / 'bob/log.log').read_text()
+time.sleep(1.5)
+assert len((DATA / 'bob/log.log').read_text()) > len(before), 'Stopping Alice interrupted Bob'
 state = json.loads(request(8101, '/blocks/designs.php?action=load&name=same-name', 'bob'))
 assert 'bob' in json.dumps(state) and 'alice' not in json.dumps(state)
 print('Real Apache authentication, IDE Run/Stop, named designs, simulator, sprites and dashboards passed.')

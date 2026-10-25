@@ -326,10 +326,17 @@ def health(name, port):
         request = urllib.request.Request(f'http://127.0.0.1:{port}/state')
         if endpoint == 'sim_port':
             request.add_header('Authorization', 'Bearer ' + (home / 'token').read_text().strip())
-        with urllib.request.urlopen(request, timeout=5) as response:
-            result = json.load(response)
-            if (endpoint == 'sprite_port' and not result.get('ok')) or (endpoint == 'sim_port' and 'scene' not in result):
-                raise RuntimeError('Simulator state check failed')
+        for attempt in range(30):
+            try:
+                with urllib.request.urlopen(request, timeout=3) as response:
+                    result = json.load(response)
+                if (endpoint == 'sprite_port' and not result.get('ok')) or (endpoint == 'sim_port' and 'scene' not in result):
+                    raise RuntimeError('Simulator state check failed')
+                break
+            except (OSError, urllib.error.URLError):
+                if attempt == 29:
+                    raise
+                time.sleep(.5)
 
 
 def verify(root):
