@@ -12,8 +12,8 @@ if systemctl is-active --quiet codynick-multi-install.service; then
 fi
 tmp=$(mktemp -d)
 trap 'rm -rf -- "$tmp"' EXIT
-curl -4 --fail --location --retry 5 --connect-timeout 20 --max-time 600 \
-  "https://codeload.github.com/codynick/rpi-multi-user/tar.gz/refs/tags/$TAG" -o "$tmp/release.tar.gz"
+wget -4 --timeout=30 --tries=5 -O "$tmp/release.tar.gz" \
+  "https://codeload.github.com/codynick/rpi-multi-user/tar.gz/refs/tags/$TAG"
 mkdir "$tmp/source"
 tar -xzf "$tmp/release.tar.gz" -C "$tmp/source" --strip-components=1
 python3 "$tmp/source/install.py" verify "$tmp/source"

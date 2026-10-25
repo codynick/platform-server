@@ -6,7 +6,7 @@
     "multi.css": "29e6da7975a3b09c366cd7f05b2710edc1478cf10b9867d52f29fb98be2e6625",
     "README.md": "d1666a2f1d1fb3b1a7073498983b0e5e3170eecc4f6a77450460c95edfdd7f6e",
     "runner.py": "41ea6e7f06354b96967b9afaf0ca1029b9217f7817bcc8c6e8da793e88a88eaa",
-    "setup.sh": "677f7de23a938105704b72e92183fda6c9f9a45d2e22c4be3bca1e3baebdb32e",
+    "setup.sh": "a73797f4c43edd68d7c4a10f13380191a33b6a54c85bac0e51ae09399fd85b4f",
     "tests/test_multi.py": "53e67c24b61296277b929e15e66bb78c14cdaee042d008202cd016659b0ee7f7",
     "tests/vm_acceptance.py": "2fe1266bff91a2ca93881d05cb7ca0cecb35781d9d09370ecbb45c8df4f6129c",
     "tools/ci_accounts.py": "266088b654ae86cb12f23e28fe11939a1bf23e7c765995bcac393e57cdba52bc",
