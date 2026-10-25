@@ -36,6 +36,6 @@ jobs:
       - name: Failure diagnostics
         if: failure()
         run: |
-          sudo systemctl status codynick-multi-alice codynick-multi-bob codynick-multi-gateway apache2 --no-pager -l || true
-          sudo journalctl -u codynick-multi-alice -u codynick-multi-bob -u codynick-multi-gateway -n 100 --no-pager || true
+          sudo systemctl status codynick-multi-alice codynick-multi-bob codynick-multi-gateway codynick-multi-admin apache2 --no-pager -l || true
+          sudo journalctl -u codynick-multi-alice -u codynick-multi-bob -u codynick-multi-gateway -u codynick-multi-admin -n 100 --no-pager || true
           sudo tail -n 80 /var/log/apache2/codynick-multi-*.log || true

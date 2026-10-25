@@ -1,5 +1,6 @@
 """Small multi-user adapter around CodyNick 0.11.0's existing interfaces."""
 import argparse
+from contextlib import contextmanager
 from datetime import datetime, timezone
 import getpass
 import hashlib
@@ -17,7 +18,7 @@ import time
 import urllib.request
 import urllib.error
 
-VERSION = '0.1.1'
+VERSION = '0.1.2'
 SOURCE = Path(__file__).resolve().parent
 CONFIG = Path('/etc/codynick-multi')
 DATA = Path('/var/lib/codynick-multi')
@@ -53,16 +54,22 @@ def validate_name(name):
     return name
 
 
+def encode_password(password):
+    if not 8 <= len(password) <= 1024 or any(c in password for c in '\r\n\0'):
+        raise ValueError('Use a password of 8-1024 characters without line breaks.')
+    return subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=password + '\n',
+                          text=True, capture_output=True, check=True).stdout.strip()
+
+
 def password_hash():
     first = getpass.getpass('Password (at least 8 characters): ')
     second = getpass.getpass('Repeat password: ')
     if len(first) < 8 or first != second:
         raise ValueError('Passwords must match and contain at least 8 characters.')
-    return subprocess.run(['openssl', 'passwd', '-6', '-stdin'], input=first + '\n',
-                          text=True, capture_output=True, check=True).stdout.strip()
+    return encode_password(first)
 
 
-def new_account(name, saved):
+def new_account(name, saved, password=None):
     validate_name(name)
     if name in saved:
         raise ValueError('Account exists. Use passwd to change its password.')
@@ -70,8 +77,25 @@ def new_account(name, saved):
     slot = next((n for n in range(100) if n not in used), None)
     if slot is None:
         raise ValueError('Account limit reached (100).')
-    return {'slot': slot, 'hash': password_hash(), 'db_password': secrets.token_hex(24),
+    return {'slot': slot, 'hash': password_hash() if password is None else encode_password(password),
+            'role': 'student' if saved else 'admin', 'db_password': secrets.token_hex(24),
             'created': datetime.now(timezone.utc).isoformat()}
+
+
+def migrate_roles(saved):
+    if saved and not any('role' in account for account in saved.values()):
+        first = min(saved, key=lambda name: saved[name]['slot'])
+        for name, account in saved.items():
+            account['role'] = 'admin' if name == first else 'student'
+    return saved
+
+
+@contextmanager
+def accounts_lock():
+    import fcntl
+    with open('/run/lock/codynick-multi-accounts.lock', 'a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        yield
 
 
 def prepare():
@@ -82,12 +106,12 @@ def prepare():
         raise RuntimeError('This edition requires Ubuntu.')
     CONFIG.mkdir(parents=True, exist_ok=True)
     CONFIG.chmod(0o700)
-    saved = accounts()
+    saved = migrate_roles(accounts())
     if not saved:
         print('Create the first web account. This is not a Linux/SSH account.')
         name = validate_name(input('Username [teacher]: ').strip() or 'teacher')
         saved[name] = new_account(name, saved)
-        save_accounts(saved)
+    save_accounts(saved)
 
 
 def copy_tree(src, dst):
@@ -102,16 +126,9 @@ def transform(text, home, sim_port, sprite_port):
             .replace("('127.0.0.1', 8092)", f"('127.0.0.1', {sprite_port})"))
 
 
-def page(name):
-    label = html.escape(name)
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>CodyNick | {label}</title>
-<link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/assets/multi.css"></head>
-<body><header><strong>CodyNick</strong><span>{label}</span><small>Multi-user {VERSION}</small><form method="post" action="/logout"><button type="submit">Sign Out</button></form></header>
-<main><h1>Your Tools</h1><nav>
-<a href="/code/">Python IDE</a><a href="/blocks/">Block Coding</a>
-<a href="/simulator/">Gadget Simulator</a><a href="/dashboard/">Dashboard</a>
-<a href="/guide.html">Guide</a></nav></main></body></html>'''
+def page(name, role='student'):
+    from views import panel_page
+    return panel_page(name, role, VERSION)
 
 
 def provision(name, account, source=SOURCE, data=DATA):
@@ -182,7 +199,7 @@ def provision(name, account, source=SOURCE, data=DATA):
             copy_tree(src, dst)
         elif src.exists():
             shutil.copy2(src, dst)
-    write(web / 'index.html', page(name))
+    write(web / 'index.html', page(name, account.get('role', 'student')))
     write(web / 'assets/multi.css', (source / 'multi.css').read_text())
     write(web / 'guide.html', (source / 'guide.html').read_text())
     # HTTP Basic auth's per-account password file is outside the document root.
@@ -251,7 +268,8 @@ ErrorLog ${{APACHE_LOG_DIR}}/codynick-multi-{name}.log
 
 
 def configure_gateway(restart=False):
-    saved = {name: {'slot': account['slot'], 'hash': account['hash']} for name, account in accounts().items()}
+    saved = {name: {'slot': account['slot'], 'hash': account['hash'], 'role': account.get('role', 'student')}
+             for name, account in accounts().items()}
     write(DATA / 'gateway-accounts.json', json.dumps(saved), 0o640)
     run('chown', 'root:www-data', DATA / 'gateway-accounts.json')
     unit = f'''[Unit]
@@ -273,6 +291,7 @@ WantedBy=multi-user.target
     conf = '''<VirtualHost *:80>
 ServerName codynick.local
 ProxyPreserveHost On
+ProxyTimeout 90
 ProxyPass / http://127.0.0.1:9000/
 ProxyPassReverse / http://127.0.0.1:9000/
 ErrorLog ${APACHE_LOG_DIR}/codynick-multi-gateway.log
@@ -305,6 +324,31 @@ def state(stage, error=None):
           'updated_at': datetime.now(timezone.utc).isoformat(), 'error': error}, indent=2))
 
 
+def configure_admin_service():
+    write('/etc/systemd/system/codynick-multi-admin.socket', '''[Unit]
+Description=CodyNick account-management socket
+[Socket]
+ListenStream=/run/codynick-multi-admin.sock
+SocketUser=codymulti
+SocketMode=0600
+RemoveOnStop=true
+[Install]
+WantedBy=sockets.target
+''')
+    write('/etc/systemd/system/codynick-multi-admin.service', f'''[Unit]
+Description=CodyNick fixed-action student account provisioner
+Requires=codynick-multi-admin.socket
+After=codynick-multi-admin.socket
+[Service]
+ExecStart=/usr/bin/python3 -u {APP}/current/admin_service.py
+User=root
+UMask=0077
+''')
+    run('systemctl', 'daemon-reload')
+    run('systemctl', 'stop', 'codynick-multi-admin.service')
+    run('systemctl', 'enable', '--now', 'codynick-multi-admin.socket')
+
+
 def install():
     state('installing')
     try:
@@ -335,6 +379,7 @@ def install():
         for name, account in accounts().items():
             ports[name] = configure_account(name, account)
         configure_gateway(restart=True)
+        configure_admin_service()
         run('apache2ctl', 'configtest')
         run('systemctl', 'restart', 'apache2')
         for name, port in ports.items():
@@ -352,9 +397,7 @@ def install():
 def health(name, port):
     run('systemctl', 'is-active', '--quiet', f'codynick-multi-{name}')
     # This account backend is loopback-only, behind the authenticated gateway.
-    with urllib.request.urlopen(f'http://127.0.0.1:{port}/', timeout=5) as response:
-        if name.encode() not in response.read():
-            raise RuntimeError(f'Workspace page missing for {name}')
+    wait_for_workspace(name, port)
     home = DATA / 'users' / name
     for _ in range(30):
         if (home / 'control.sock').exists():
@@ -378,6 +421,40 @@ def health(name, port):
                 if attempt == 29:
                     raise
                 time.sleep(.5)
+
+
+def wait_for_workspace(name, port):
+    for attempt in range(30):
+        try:
+            with urllib.request.urlopen(f'http://127.0.0.1:{port}/', timeout=1) as response:
+                if name.encode() not in response.read():
+                    raise RuntimeError(f'Workspace page missing for {name}')
+            return
+        except (OSError, urllib.error.URLError):
+            if attempt == 29:
+                raise
+            time.sleep(.25)
+
+
+def finish_account(name, settings):
+    port = configure_account(name, settings)
+    configure_gateway()
+    run('apache2ctl', 'configtest')
+    run('systemctl', 'reload', 'apache2')
+    health(name, port)
+    gateway_health()
+
+
+def add_student(actor, name, password):
+    with accounts_lock():
+        saved = accounts()
+        if saved.get(actor, {}).get('role') != 'admin':
+            raise PermissionError('Administrator account required.')
+        settings = new_account(name, saved, password)
+        settings['role'] = 'student'
+        saved[name] = settings
+        save_accounts(saved)
+        finish_account(name, settings)
 
 
 def verify(root):
@@ -410,20 +487,16 @@ def main():
             print(f'{name}: http://<device-IP>/ (shared login)')
     else:
         name = validate_name(args.value or input('Username: ').strip())
-        saved = accounts()
-        if args.action == 'add-user':
-            saved[name] = new_account(name, saved)
-        else:
-            if name not in saved:
-                raise ValueError('Unknown account')
-            saved[name]['hash'] = password_hash()
-        save_accounts(saved)
-        port = configure_account(name, saved[name])
-        configure_gateway()
-        run('apache2ctl', 'configtest')
-        run('systemctl', 'reload', 'apache2')
-        health(name, port)
-        gateway_health()
+        with accounts_lock():
+            saved = accounts()
+            if args.action == 'add-user':
+                saved[name] = new_account(name, saved)
+            else:
+                if name not in saved:
+                    raise ValueError('Unknown account')
+                saved[name]['hash'] = password_hash()
+            save_accounts(saved)
+            finish_account(name, saved[name])
         print('Account ready: http://<device-IP>/ (shared login)')
 
 

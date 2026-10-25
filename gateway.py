@@ -11,9 +11,12 @@ from pathlib import Path
 import re
 import secrets
 import subprocess
+import socket
 import threading
 import time
 from urllib.parse import parse_qs, urlsplit
+from views import login_page, panel_page, users_page
+from install import VERSION
 
 COOKIE = 'codynick_multi_session'
 SESSION_SECONDS = 12 * 60 * 60
@@ -75,16 +78,18 @@ class Sessions:
             self.sessions.pop(token, None)
 
 
-def login_page(error=''):
-    message = '<p role="alert">' + html.escape(error) + '</p>' if error else ''
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign In | CodyNick</title>
-<link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/assets/multi.css"></head>
-<body><header><strong>CodyNick</strong><span>Multi-user</span></header><main class="login-main">
-<h1>Sign In</h1><form class="login-form" method="post" action="/login">
-<label for="username">Username</label><input id="username" name="username" autocomplete="username" maxlength="20" required autofocus>
-<label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
-{message}<button type="submit">Sign In</button></form></main></body></html>'''
+def csrf_token(token):
+    return hashlib.sha256(('admin-users:' + token).encode()).hexdigest()
+
+
+def create_student(actor, name, password):
+    request = dict(action='add-student', actor=actor, username=name, password=password)
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+        client.settimeout(60)
+        client.connect('/run/codynick-multi-admin.sock')
+        client.sendall((json.dumps(request) + '\n').encode())
+        with client.makefile('rb') as response:
+            return json.loads(response.readline(8192))
 
 
 def handler(sessions):
@@ -130,16 +135,19 @@ def handler(sessions):
 
         def process(self):
             try:
-                body = self.body(52 * 1024 * 1024 if self.path not in ('/login', '/logout') else 8192)
+                path = urlsplit(self.path).path
+                body = self.body(8192 if path in ('/login', '/logout', '/admin/users') else 52 * 1024 * 1024)
                 if self.command == 'POST':
                     origin = self.headers.get('Origin')
                     if self.headers.get('Sec-Fetch-Site') == 'cross-site' or (
                         origin and urlsplit(origin).netloc != self.headers.get('Host')):
                         return self.send(403, 'Local requests only')
-                path = urlsplit(self.path).path
-                if path in ('/favicon.ico', '/assets/multi.css'):
-                    asset = ROOT / ('upstream/components/ide/assets/favicon.ico' if path.endswith('.ico') else 'multi.css')
-                    return self.send(200, asset.read_bytes(), 'image/x-icon' if path.endswith('.ico') else 'text/css')
+                if path in ('/favicon.ico', '/assets/multi.css', '/assets/logo.png'):
+                    assets = {'/favicon.ico': ('upstream/components/ide/assets/favicon.ico', 'image/x-icon'),
+                              '/assets/logo.png': ('upstream/components/ide/assets/logo.png', 'image/png'),
+                              '/assets/multi.css': ('multi.css', 'text/css')}
+                    asset, kind = assets[path]
+                    return self.send(200, (ROOT / asset).read_bytes(), kind)
                 if path == '/login':
                     if self.command in ('GET', 'HEAD'):
                         return self.send(200, login_page())
@@ -156,7 +164,27 @@ def handler(sessions):
                 account = sessions.account(self.token())
                 if account is None:
                     return self.send(303, headers=[('Location', '/login')])
-                _, settings = account
+                name, settings = account
+                if path == '/admin/users':
+                    if settings.get('role') != 'admin':
+                        return self.send(403, 'Administrator account required.')
+                    csrf = csrf_token(self.token())
+                    if self.command == 'POST':
+                        form = parse_qs(body.decode('utf-8'))
+                        if not hmac.compare_digest(form.get('csrf', [''])[0], csrf):
+                            return self.send(403, 'Please reload the Users page and try again.')
+                        password = form.get('password', [''])[0]
+                        username = form.get('username', [''])[0].strip()
+                        if password != form.get('confirm', [''])[0]:
+                            return self.send(400, users_page(name, sessions.accounts(), csrf, error='Passwords do not match.'))
+                        result = create_student(name, username, password)
+                        if not result.get('ok'):
+                            return self.send(400, users_page(name, sessions.accounts(), csrf, error=result.get('error', 'Account setup failed.')))
+                        return self.send(303, headers=[('Location', '/admin/users?created=' + username)])
+                    created = parse_qs(urlsplit(self.path).query).get('created', [''])[0]
+                    return self.send(200, users_page(name, sessions.accounts(), csrf, created=created))
+                if path == '/':
+                    return self.send(200, panel_page(name, settings.get('role', 'student'), VERSION))
                 self.proxy(8100 + settings['slot'], body)
             except (ValueError, UnicodeError):
                 self.close_connection = True

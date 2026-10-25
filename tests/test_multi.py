@@ -8,6 +8,8 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch, MagicMock
+import urllib.error
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -16,6 +18,30 @@ from runner import Programs
 
 
 class WorkspaceTests(unittest.TestCase):
+    def test_role_migration_uses_first_account(self):
+        saved = {'student1': {'slot': 1}, 'teacher': {'slot': 0}}
+        install.migrate_roles(saved)
+        self.assertEqual(saved['teacher']['role'], 'admin')
+        self.assertEqual(saved['student1']['role'], 'student')
+        self.assertEqual(install.migrate_roles(saved), saved)
+
+    def test_waits_for_reload_to_open_new_listener(self):
+        response = MagicMock()
+        response.__enter__.return_value.read.return_value = b'student1 workspace'
+        with patch('install.urllib.request.urlopen', side_effect=[urllib.error.URLError('refused'), response]) as get, patch('install.time.sleep'):
+            install.wait_for_workspace('student1', 8101)
+        self.assertEqual(get.call_count, 2)
+
+    def test_web_creation_checks_admin_and_forces_student_role(self):
+        from contextlib import nullcontext
+        saved = {'teacher': {'slot': 0, 'role': 'admin'}, 'bob': {'slot': 1, 'role': 'student'}}
+        with patch('install.accounts_lock', nullcontext), patch('install.accounts', return_value=saved), patch('install.finish_account'), patch('install.save_accounts'), patch('install.encode_password', return_value='HASH'):
+            with self.assertRaises(PermissionError):
+                install.add_student('bob', 'other', 'password123')
+            install.add_student('teacher', 'other', 'password123')
+        self.assertEqual(saved['other']['role'], 'student')
+        self.assertEqual(saved['other']['hash'], 'HASH')
+
     def account(self, slot):
         return dict(slot=slot, hash='$6$testhash', db_password='a' * 48)
 

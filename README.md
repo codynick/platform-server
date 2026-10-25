@@ -1,4 +1,4 @@
-# CodyNick Multi-user 0.1.1
+# CodyNick Multi-user 0.1.2
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
@@ -12,7 +12,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.1: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.2: READY`.
 
 ```bash
 sudo tail -n 80 -f /var/log/codynick-multi/install.log
@@ -28,6 +28,17 @@ firewall rules. Use a dedicated VM; its default Apache site becomes this portal.
 
 ## Accounts
 
+Sign in with the first account (normally `teacher`), choose **Users** on the main
+panel, and enter a username, password and password confirmation under **Add Student**.
+The account appears in the list and can sign in at the same address immediately
+after successful creation. The existing teacher session stays signed in.
+
+On upgrade from 0.1.0/0.1.1, the first-created account becomes Administrator;
+existing other accounts become Students. All passwords and files are retained.
+Only administrators can open Users or create students through the web interface.
+There is no web account deletion, role editing or password-reset interface yet.
+The original SSH commands still work:
+
 ```bash
 sudo codynick-multi-user add-user student1
 sudo codynick-multi-user add-user student2
@@ -40,8 +51,7 @@ use separate browser profiles/devices to test multiple users simultaneously.
 Sign Out is on the main panel. Sessions expire after 12 hours idle and are cleared
 when the login service restarts; running scripts continue until Stop or an upgrade.
 Adding an account does not sign out others. Password changes invalidate that account's
-sessions. The teacher provisions accounts over SSH; no registration, roles, account
-deletion or recovery UI yet. Do not publish this HTTP service to the Internet.
+sessions. There is no self-registration. Do not publish this HTTP service to the Internet.
 
 ## Minimum-change architecture
 
@@ -61,6 +71,7 @@ less upstream code. There is no AI memory overhead.
 - Managed release: `/opt/codynick-multi/current`
 - Account service: `codynick-multi-NAME.service`
 - Shared login service: `codynick-multi-gateway.service` (loopback 9000)
+- Fixed-action root account broker: `codynick-multi-admin.socket` / `.service`
 - Private account sites: loopback 8100-8199, not public user addresses
 - Private backend ports: 9200-9399 on loopback only
 
@@ -98,7 +109,7 @@ HTTPS, per-user Linux identities and multi-tenant AI are outside this version.
 `python -m unittest discover -s tests` checks generation, preserved data and process
 separation. Linux CI also lints PHP and tests real independent process groups.
 `python tools/seal.py` regenerates the release file hashes. Publish immutable tag
-`v0.1.1-shared-login` with main. Never move a published tag; make a new release.
+`v0.1.2-web-users` with main. Never move a published tag; make a new release.
 Keep the fixed command unchanged on later versions. Older source directories are
 retained; automated downgrade selection is not implemented in this initial edition.
 
@@ -108,3 +119,15 @@ Shared form-based sign-in/sign-out and one public address replace per-user publi
 ports and browser Basic authentication. Existing 0.1.0 account passwords, files,
 designs and dashboard databases are retained. Old private services remain the same;
 only web listeners, login/routing, installer metadata, tests and guides changed.
+
+## Changes in 0.1.2
+
+Administrator-only Users page with Add Student and an account list; no general
+root shell/sudo access is given to the web service. A fixed-action Unix socket
+broker validates administrator role, username and password and provisions students
+using the existing account setup. CSRF tokens protect account-creation forms.
+This is browser-role separation, not a hostile-Python sandbox: the earlier shared
+Linux-identity limitation remains. The main panel now uses the original RPi panel's
+CodyNick logo, blue/white styling and tool-card layout, with correct account, role
+and release information. New-listener health checks wait for Apache reload readiness
+instead of reporting a transient Connection Refused traceback.

@@ -3,6 +3,8 @@ import http.cookiejar
 import json
 from pathlib import Path
 import time
+import re
+import secrets
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -82,6 +84,33 @@ assert len((DATA / 'bob/log.log').read_text()) > len(before), 'Stopping Alice in
 state = json.loads(request(80, '/blocks/designs.php?action=load&name=same-name', 'bob'))
 assert 'bob' in json.dumps(state) and 'alice' not in json.dumps(state)
 assert b'alice' in request(80, '/?user=bob', 'alice')
+# The first account is the administrator; students cannot open or POST Users.
+try:
+    request(80, '/admin/users', 'bob')
+except urllib.error.HTTPError as error:
+    assert error.code == 403
+else:
+    raise AssertionError('Student opened account management')
+try:
+    request(80, '/admin/users', 'bob', {'username': 'forbidden', 'password': PASSWORD, 'confirm': PASSWORD})
+except urllib.error.HTTPError as error:
+    assert error.code == 403
+else:
+    raise AssertionError('Student created an account')
+page = request(80, '/admin/users', 'alice').decode()
+csrf = re.search(r'name="csrf" value="([a-f0-9]+)"', page).group(1)
+try:
+    request(80, '/admin/users', 'alice', {'username': 'badcsrf', 'password': PASSWORD, 'confirm': PASSWORD, 'csrf': 'invalid'})
+except urllib.error.HTTPError as error:
+    assert error.code == 403
+else:
+    raise AssertionError('Missing CSRF protection')
+student = 'web_' + secrets.token_hex(4)
+out = request(80, '/admin/users', 'alice', {'username': student, 'password': PASSWORD, 'confirm': PASSWORD, 'csrf': csrf})
+assert (student + ' added.').encode() in out, out
+assert student.encode() in request(80, '/', student)
+assert b'/admin/users' not in request(80, '/', student)
+assert b'alice' in request(80, '/', 'alice'), 'Adding a student signed out the teacher'
 assert b'Username' in request(80, '/logout', 'alice', {})
 assert b'Username' in request(80, '/code/', 'alice')
 assert b'bob' in request(80, '/', 'bob')

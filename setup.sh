@@ -1,6 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
-TAG=v0.1.1-shared-login
+TAG=v0.1.2-web-users
 ROOT=/opt/codynick-multi
 if [[ $EUID != 0 ]]; then echo 'Run this installer with sudo bash.'; exit 1; fi
 mkdir -p "$ROOT" /var/log/codynick-multi

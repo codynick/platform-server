@@ -1,19 +1,20 @@
 {
-  "version": "0.1.1",
+  "version": "0.1.2",
   "files": {
-    "gateway.py": "37ec9769ceb615f5d45976b75749dd1cc43ea76da0e3963cbba807c856bc70f9",
+    "admin_service.py": "94bb1d64030ec5ccaa0b5496b8b889e6d582eb5c5783b6c33429ad1339bc59b0",
+    "gateway.py": "ba976a88c3f76e37755e30e6a5b099d1a7ef20dc7d699b3547f998935b87f8a9",
     "guide.html": "314527ec35ee46b106ff67f9cd14f00a4be35c033b9df004fd134fe6653041ed",
-    "install.py": "d5c3e4b030b6fdc3e7ce5b6c5015ca25d040e9f31929caec5293b57ec72346cf",
-    "multi.css": "2ac2dda1b410fdfc37f244dc2d8657f3222ee1d5e124ff9a0e830bbe1befea85",
-    "README.md": "140ab3892d143472a85d65c638244ac185e195421fd462f726647ee18a10da9f",
+    "install.py": "3eae8f9b84db548e5442396e06a04063b801737eebf46042a48765fdbeae1cbd",
+    "multi.css": "5360590c6b50c16a60319de2eab0ada435f3eb4ecf420a0064f608b1b8e84c10",
+    "README.md": "74691a77fc4a050dc89a3b99aef1d19b3e4fe1bd09df9a54cd9f25afed65404b",
     "runner.py": "41ea6e7f06354b96967b9afaf0ca1029b9217f7817bcc8c6e8da793e88a88eaa",
-    "setup.sh": "5a763aa13bc136977a4d091b000ded13f3fe5f58a19cc4e3caae5954d83a56d1",
+    "setup.sh": "5d7913a4011d4de32fa3c7b7bfa40731be30479fbb7c325dc398f0bbe63fabdd",
     "tests/test_gateway.py": "616f3e3be895a5216cfa81f06e12aa7e0fbc952b9557a253c21ce39272eaf934",
-    "tests/test_multi.py": "53e67c24b61296277b929e15e66bb78c14cdaee042d008202cd016659b0ee7f7",
-    "tests/vm_acceptance.py": "311f39b685d9f817c78494e10254d061d5e435e0e65f9269bf0932196e408f2d",
+    "tests/test_multi.py": "872106b58de2b4d44b1adeef2924622c1624ce9b375e871028af9c274b7a2361",
+    "tests/vm_acceptance.py": "d801dd32f79768eace68af6c202dfb4394c8ede7a620454e6e3c84a202457bfd",
     "tools/ci_accounts.py": "266088b654ae86cb12f23e28fe11939a1bf23e7c765995bcac393e57cdba52bc",
-    "tools/preview.cjs": "b101fcb4458e5f90387ae4ca3671df500fc748d74db0aa31c21becbb78fdce86",
-    "tools/seal.py": "25002acdaa5fb62af1ad67543d955c7a3759de8f4f5ad0195f45d1cb30b5e2fe",
+    "tools/preview.cjs": "acb7464c493256194f5dec896240637aa33c3deaa03a998c9d7640d6a88a0535",
+    "tools/seal.py": "25008877f5f0a3df2ebcf4437c5d855298133a681830dbbebc03af82e470d708",
     "upstream/components/client/CodyNick.py": "643f3cb77466f0c636737fa3ff0a40bf2ec66a4b172062c4978dde97d809859b",
     "upstream/components/client/CodyNickSimulator.py": "daa347211011b3deb30b66478f7d2508a37661913318dc25957425c821490c76",
     "upstream/components/client/Dashboard.py": "3cbd5d01ec29256c29d29f05293eefaedd6b3c5d79d450e4bfa2b63cf9624a95",
@@ -162,6 +163,7 @@
     "upstream/components/simulator/wifi_sim.py": "33bbb3cdebad38194523b22f7ac6d7503acae6150627372c325c75c5991c37ff",
     "upstream/components/sprite-stage/codynick-sprite-stage.service": "41f957860163a1a0e004456bb6ed23d517cf775bdd2c1081f92bf830513d7128",
     "upstream/components/sprite-stage/health_check.py": "4ab9f2d5b622bc966ab054d7166745615c1fa3468c8ac4433202d080dcaef856",
-    "upstream/components/sprite-stage/server.py": "5e11077328259a64d8d82a3259e17de558d018ca0fa9294a7abd1eb1d217313a"
+    "upstream/components/sprite-stage/server.py": "5e11077328259a64d8d82a3259e17de558d018ca0fa9294a7abd1eb1d217313a",
+    "views.py": "ce97fbd73d6cb6fbd81ac86db04b0272a6672c702e9ae2d36a9388812bb293c2"
   }
 }
