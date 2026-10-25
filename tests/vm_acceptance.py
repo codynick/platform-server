@@ -16,14 +16,15 @@ def login(name, password=PASSWORD):
     client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     client.addheaders = [('Host', '127.0.0.1:8080'), ('Origin', 'http://127.0.0.1:8080')]
     data = urllib.parse.urlencode({'username': name, 'password': password}).encode()
-    with client.open('http://127.0.0.1/login', data, timeout=15) as response:
+    req = urllib.request.Request('http://127.0.0.1/login', data, {'Host': '127.0.0.1:8080'})
+    with client.open(req, timeout=15) as response:
         page = response.read()
         assert name.encode() in page, page
     return client
 
 
 def request(port, path, name='alice', data=None, json_body=False):
-    headers = {}
+    headers = {'Host': '127.0.0.1:8080'}
     if data is not None:
         if json_body:
             data = json.dumps(data).encode()

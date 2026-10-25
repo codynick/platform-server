@@ -10,7 +10,7 @@
     "setup.sh": "5a763aa13bc136977a4d091b000ded13f3fe5f58a19cc4e3caae5954d83a56d1",
     "tests/test_gateway.py": "616f3e3be895a5216cfa81f06e12aa7e0fbc952b9557a253c21ce39272eaf934",
     "tests/test_multi.py": "53e67c24b61296277b929e15e66bb78c14cdaee042d008202cd016659b0ee7f7",
-    "tests/vm_acceptance.py": "4a4cfa949d5ade952c956a4a503fe603d17b7a824433bc718cf9832f169fa337",
+    "tests/vm_acceptance.py": "311f39b685d9f817c78494e10254d061d5e435e0e65f9269bf0932196e408f2d",
     "tools/ci_accounts.py": "266088b654ae86cb12f23e28fe11939a1bf23e7c765995bcac393e57cdba52bc",
     "tools/preview.cjs": "b101fcb4458e5f90387ae4ca3671df500fc748d74db0aa31c21becbb78fdce86",
     "tools/seal.py": "25002acdaa5fb62af1ad67543d955c7a3759de8f4f5ad0195f45d1cb30b5e2fe",
