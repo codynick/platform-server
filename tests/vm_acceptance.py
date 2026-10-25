@@ -1,5 +1,5 @@
 """Destructive-to-test-VM only: run after install in an ephemeral Linux CI VM."""
-import base64
+import http.cookiejar
 import json
 from pathlib import Path
 import time
@@ -9,10 +9,21 @@ import urllib.request
 
 PASSWORD = 'OnlyForEphemeralCI123'
 DATA = Path('/var/lib/codynick-multi/users')
+CLIENTS = {}
+
+
+def login(name, password=PASSWORD):
+    client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+    client.addheaders = [('Host', '127.0.0.1:8080'), ('Origin', 'http://127.0.0.1:8080')]
+    data = urllib.parse.urlencode({'username': name, 'password': password}).encode()
+    with client.open('http://127.0.0.1/login', data, timeout=15) as response:
+        page = response.read()
+        assert name.encode() in page, page
+    return client
 
 
 def request(port, path, name='alice', data=None, json_body=False):
-    headers = {'Authorization': 'Basic ' + base64.b64encode(f'{name}:{PASSWORD}'.encode()).decode()}
+    headers = {}
     if data is not None:
         if json_body:
             data = json.dumps(data).encode()
@@ -20,11 +31,17 @@ def request(port, path, name='alice', data=None, json_body=False):
         else:
             data = urllib.parse.urlencode(data).encode()
     req = urllib.request.Request(f'http://127.0.0.1:{port}{path}', data, headers)
-    with urllib.request.urlopen(req, timeout=15) as response:
+    if name not in CLIENTS:
+        CLIENTS[name] = login(name)
+    with CLIENTS[name].open(req, timeout=15) as response:
         return response.read()
 
 
-for port, name in ((8100, 'alice'), (8101, 'bob')):
+with urllib.request.urlopen('http://127.0.0.1/code/') as response:
+    assert response.url.endswith('/login')
+    assert b'Username' in response.read()
+
+for port, name in ((80, 'alice'), (80, 'bob')):
     for path in ('/', '/code/', '/blocks/', '/dashboard/', '/simulation/', '/simulation/app.js'):
         assert request(port, path, name), (name, path)
     assert 'scene' in json.loads(request(port, '/simulation/state', name))
@@ -40,20 +57,34 @@ for port, name in ((8100, 'alice'), (8101, 'bob')):
     assert json.loads(request(port, '/code/?action=run', name, {'content': code}))['ok']
     assert json.loads(request(port, '/blocks/designs.php?action=save', name,
            {'name': 'same-name', 'overwrite': True, 'workspace': {'blocks': {'languageVersion': 0}, 'test_owner': name}}, True))['ok']
+    x = 15 if name == 'alice' else -15
+    request(port, '/blocks/stage.php', name, {'action': 'go', 'x': x, 'y': 0}, True)
+    scene = json.loads(request(port, '/simulation/state', name))['scene']
+    scene['temperature'] = 19 if name == 'alice' else 27
+    request(port, '/simulation/command', name, {'action': 'scene', 'scene': scene}, True)
 
 time.sleep(3)
-for port, name in ((8100, 'alice'), (8101, 'bob')):
+for port, name in ((80, 'alice'), (80, 'bob')):
     log = (DATA / name / 'log.log').read_text()
     assert name in log and 'Traceback' not in log, log
     cards = json.loads(request(port, '/dashboard/cards.php?action=state', name))
     assert name in json.dumps(cards), cards
     other = 'bob' if name == 'alice' else 'alice'
     assert other not in json.dumps(cards), cards
+    assert json.loads(request(port, '/blocks/stage.php', name))['state']['x'] == (15 if name == 'alice' else -15)
+    assert json.loads(request(port, '/simulation/state', name))['scene']['temperature'] == (19 if name == 'alice' else 27)
 
-assert json.loads(request(8100, '/code/?action=stop', 'alice', {}))['ok']
+assert json.loads(request(80, '/code/?action=stop', 'alice', {}))['ok']
 before = (DATA / 'bob/log.log').read_text()
 time.sleep(1.5)
 assert len((DATA / 'bob/log.log').read_text()) > len(before), 'Stopping Alice interrupted Bob'
-state = json.loads(request(8101, '/blocks/designs.php?action=load&name=same-name', 'bob'))
+state = json.loads(request(80, '/blocks/designs.php?action=load&name=same-name', 'bob'))
 assert 'bob' in json.dumps(state) and 'alice' not in json.dumps(state)
-print('Real Apache authentication, IDE Run/Stop, named designs, simulator, sprites and dashboards passed.')
+assert b'alice' in request(80, '/?user=bob', 'alice')
+assert b'Username' in request(80, '/logout', 'alice', {})
+assert b'Username' in request(80, '/code/', 'alice')
+assert b'bob' in request(80, '/', 'bob')
+for name in ('alice', 'bob'):
+    text = Path(f'/etc/apache2/sites-enabled/codynick-multi-{name}.conf').read_text()
+    assert 'Listen 127.0.0.1:' in text and 'Listen 810' not in text
+print('Shared login, logout, forwarded Host:8080, independent tools and private backend listeners passed.')

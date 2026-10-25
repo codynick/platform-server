@@ -1,4 +1,4 @@
-# CodyNick Multi-user 0.1.0
+# CodyNick Multi-user 0.1.1
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
@@ -12,7 +12,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.0: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.1: READY`.
 
 ```bash
 sudo tail -n 80 -f /var/log/codynick-multi/install.log
@@ -20,10 +20,11 @@ sudo codynick-multi-user status
 sudo codynick-multi-user list
 ```
 
-Open `http://VM-IP:8100/` for the first account and enter that account's credentials
-in the browser prompt. VM networking must allow client access: bridged/host-only
-networking, or an explicit NAT forwarding rule. Allow the relevant TCP ports if
-a firewall is enabled; the installer does not alter firewall rules.
+All users open `http://VM-IP/` and enter their own username and password in the
+shared login page. For VirtualBox NAT on Windows, forward TCP **2222 to guest 22**
+for SSH and **8080 to guest 80** for all web users. Open `http://127.0.0.1:8080/`.
+No additional user-port forwarding rules are needed. The installer does not alter
+firewall rules. Use a dedicated VM; its default Apache site becomes this portal.
 
 ## Accounts
 
@@ -34,17 +35,21 @@ sudo codynick-multi-user passwd student1
 sudo codynick-multi-user list
 ```
 
-Each account receives its own numbered port: 8100, 8101, ... 8199. One account
-per browser profile is recommended. Authentication is HTTP Basic, not a shared
-session login page. No registration, roles, account deletion or recovery UI yet.
-The teacher provisions accounts over SSH. Do not publish this HTTP service to the Internet.
+Everyone uses the same address. A session cookie selects the signed-in account;
+use separate browser profiles/devices to test multiple users simultaneously.
+Sign Out is on the main panel. Sessions expire after 12 hours idle and are cleared
+when the login service restarts; running scripts continue until Stop or an upgrade.
+Adding an account does not sign out others. Password changes invalidate that account's
+sessions. The teacher provisions accounts over SSH; no registration, roles, account
+deletion or recovery UI yet. Do not publish this HTTP service to the Internet.
 
 ## Minimum-change architecture
 
 The tested single-user interfaces are reused rather than rewritten. Each account
 gets its own document root, Run/Stop socket, Python process, dashboard database,
-simulator and sprite state. The private services listen on loopback; Apache
-proxies the simulator behind the same authenticated web address. Libraries and
+simulator and sprite state. A small Python session router sits behind Apache's
+single public port 80 and routes to private loopback-only account sites. Apache
+proxies each simulator behind that account's same-origin paths. Libraries and
 interfaces come from one vendored source tree and are materialized per account.
 This uses more disk/processes than a fully namespaced backend but changes much
 less upstream code. There is no AI memory overhead.
@@ -55,6 +60,8 @@ less upstream code. There is no AI memory overhead.
 - Account configuration: `/etc/codynick-multi/accounts.json` (root-only)
 - Managed release: `/opt/codynick-multi/current`
 - Account service: `codynick-multi-NAME.service`
+- Shared login service: `codynick-multi-gateway.service` (loopback 9000)
+- Private account sites: loopback 8100-8199, not public user addresses
 - Private backend ports: 9200-9399 on loopback only
 
 The updater preserves user files, active scripts, designs and simulation layouts.
@@ -75,7 +82,7 @@ browser sprite keys and simulator joysticks work without root.
 
 ## Test with two users
 
-1. Create student1 and student2. Open their addresses in separate browser profiles/devices.
+1. Create student1 and student2. Open the same address in separate browser profiles/devices; sign in separately.
 2. Run different printing loops. Stop one; the other must continue.
 3. Save files/designs with the same names; load them and verify different contents.
 4. Run simulator examples and different sprite programs. Scenes must remain independent.
@@ -91,6 +98,13 @@ HTTPS, per-user Linux identities and multi-tenant AI are outside this version.
 `python -m unittest discover -s tests` checks generation, preserved data and process
 separation. Linux CI also lints PHP and tests real independent process groups.
 `python tools/seal.py` regenerates the release file hashes. Publish immutable tag
-`v0.1.0-multi-user` with main. Never move a published tag; make a new release.
+`v0.1.1-shared-login` with main. Never move a published tag; make a new release.
 Keep the fixed command unchanged on later versions. Older source directories are
 retained; automated downgrade selection is not implemented in this initial edition.
+
+## Changes in 0.1.1
+
+Shared form-based sign-in/sign-out and one public address replace per-user public
+ports and browser Basic authentication. Existing 0.1.0 account passwords, files,
+designs and dashboard databases are retained. Old private services remain the same;
+only web listeners, login/routing, installer metadata, tests and guides changed.

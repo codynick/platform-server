@@ -17,7 +17,7 @@ import time
 import urllib.request
 import urllib.error
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 SOURCE = Path(__file__).resolve().parent
 CONFIG = Path('/etc/codynick-multi')
 DATA = Path('/var/lib/codynick-multi')
@@ -107,7 +107,7 @@ def page(name):
     return f'''<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1"><title>CodyNick | {label}</title>
 <link rel="icon" href="/favicon.ico"><link rel="stylesheet" href="/assets/multi.css"></head>
-<body><header><strong>CodyNick</strong><span>{label}</span><small>Multi-user {VERSION}</small></header>
+<body><header><strong>CodyNick</strong><span>{label}</span><small>Multi-user {VERSION}</small><form method="post" action="/logout"><button type="submit">Sign Out</button></form></header>
 <main><h1>Your Tools</h1><nav>
 <a href="/code/">Python IDE</a><a href="/blocks/">Block Coding</a>
 <a href="/simulator/">Gadget Simulator</a><a href="/dashboard/">Dashboard</a>
@@ -219,23 +219,17 @@ TimeoutStopSec=12
 WantedBy=multi-user.target
 '''
     write(Path('/etc/systemd/system') / f'codynick-multi-{name}.service', unit)
-    conf = f'''Listen {port}
-<VirtualHost *:{port}>
+    conf = f'''Listen 127.0.0.1:{port}
+<VirtualHost 127.0.0.1:{port}>
 DocumentRoot "{home}/web"
 DirectoryIndex index.php index.html
 <Directory "{home}/web">
 Options -Indexes +FollowSymLinks
 AllowOverride None
-AuthType Basic
-AuthName "CodyNick {name}"
-AuthUserFile "{home}/passwords"
-Require user {name}
+Require local
 </Directory>
 <Location />
-AuthType Basic
-AuthName "CodyNick {name}"
-AuthUserFile "{home}/passwords"
-Require user {name}
+Require local
 </Location>
 <Directory "{home}/web/blocks/data">
 Require all denied
@@ -254,6 +248,56 @@ ErrorLog ${{APACHE_LOG_DIR}}/codynick-multi-{name}.log
     run('systemctl', 'enable', f'codynick-multi-{name}')
     run('systemctl', 'restart', f'codynick-multi-{name}')
     return port
+
+
+def configure_gateway(restart=False):
+    saved = {name: {'slot': account['slot'], 'hash': account['hash']} for name, account in accounts().items()}
+    write(DATA / 'gateway-accounts.json', json.dumps(saved), 0o640)
+    run('chown', 'root:www-data', DATA / 'gateway-accounts.json')
+    unit = f'''[Unit]
+Description=CodyNick shared login router
+After=network.target
+[Service]
+User=codymulti
+Group=www-data
+ExecStart=/usr/bin/python3 -u {APP}/current/gateway.py
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+UMask=0007
+[Install]
+WantedBy=multi-user.target
+'''
+    write('/etc/systemd/system/codynick-multi-gateway.service', unit)
+    # Apache already listens on port 80. This is the dedicated VM's default site.
+    conf = '''<VirtualHost *:80>
+ServerName codynick.local
+ProxyPreserveHost On
+ProxyPass / http://127.0.0.1:9000/
+ProxyPassReverse / http://127.0.0.1:9000/
+ErrorLog ${APACHE_LOG_DIR}/codynick-multi-gateway.log
+</VirtualHost>
+'''
+    write('/etc/apache2/sites-available/000-codynick-multi-gateway.conf', conf)
+    run('a2dissite', '000-default')
+    run('a2ensite', '000-codynick-multi-gateway')
+    run('systemctl', 'daemon-reload')
+    run('systemctl', 'enable', '--now', 'codynick-multi-gateway')
+    if restart:
+        run('systemctl', 'restart', 'codynick-multi-gateway')
+
+
+def gateway_health():
+    for attempt in range(30):
+        try:
+            with urllib.request.urlopen('http://127.0.0.1/login', timeout=3) as response:
+                if b'Username' not in response.read():
+                    raise RuntimeError('Shared login page not available')
+            return
+        except (OSError, urllib.error.URLError):
+            if attempt == 29:
+                raise
+            time.sleep(.5)
 
 
 def state(stage, error=None):
@@ -290,14 +334,15 @@ def install():
         ports = {}
         for name, account in accounts().items():
             ports[name] = configure_account(name, account)
+        configure_gateway(restart=True)
         run('apache2ctl', 'configtest')
         run('systemctl', 'restart', 'apache2')
         for name, port in ports.items():
             health(name, port)
+        gateway_health()
         state('ready')
         print(f'CodyNick Multi-user {VERSION}: READY', flush=True)
-        for name, port in ports.items():
-            print(f'{name}: http://<device-IP>:{port}/', flush=True)
+        print('All users: http://<device-IP>/ (VirtualBox: http://127.0.0.1:8080/)', flush=True)
         print('Networking was not changed. AI was not installed.', flush=True)
     except Exception as error:
         state('failed', str(error))
@@ -306,14 +351,10 @@ def install():
 
 def health(name, port):
     run('systemctl', 'is-active', '--quiet', f'codynick-multi-{name}')
-    # Authentication must protect every user's root page.
-    try:
-        urllib.request.urlopen(f'http://127.0.0.1:{port}/', timeout=5)
-    except urllib.error.HTTPError as error:
-        if error.code != 401:
-            raise
-    else:
-        raise RuntimeError(f'Authentication missing on account {name}')
+    # This account backend is loopback-only, behind the authenticated gateway.
+    with urllib.request.urlopen(f'http://127.0.0.1:{port}/', timeout=5) as response:
+        if name.encode() not in response.read():
+            raise RuntimeError(f'Workspace page missing for {name}')
     home = DATA / 'users' / name
     for _ in range(30):
         if (home / 'control.sock').exists():
@@ -366,7 +407,7 @@ def main():
         print((DATA / 'state.json').read_text())
     elif args.action == 'list':
         for name, account in accounts().items():
-            print(f'{name}: http://<device-IP>:{8100 + account["slot"]}/')
+            print(f'{name}: http://<device-IP>/ (shared login)')
     else:
         name = validate_name(args.value or input('Username: ').strip())
         saved = accounts()
@@ -378,10 +419,12 @@ def main():
             saved[name]['hash'] = password_hash()
         save_accounts(saved)
         port = configure_account(name, saved[name])
+        configure_gateway()
         run('apache2ctl', 'configtest')
         run('systemctl', 'reload', 'apache2')
         health(name, port)
-        print(f'Account ready: http://<device-IP>:{port}/')
+        gateway_health()
+        print('Account ready: http://<device-IP>/ (shared login)')
 
 
 if __name__ == '__main__':
