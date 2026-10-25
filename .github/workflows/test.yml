@@ -33,6 +33,20 @@ jobs:
         run: |
           sudo python3 -u /opt/codynick-multi/releases/test/install.py install
           sudo python3 tests/vm_acceptance.py
+      - name: Check mobile IDE in a real browser
+        env:
+          PLAYWRIGHT_MODULE: /tmp/codynick-mobile-check/node_modules/playwright
+          BASE_URL: http://127.0.0.1
+        run: |
+          npm install --prefix /tmp/codynick-mobile-check playwright
+          node /tmp/codynick-mobile-check/node_modules/playwright/cli.js install --with-deps chromium
+          node tools/test_mobile.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-ide-screenshots
+          path: test-output/ide-*.png
+          if-no-files-found: ignore
       - name: Failure diagnostics
         if: failure()
         run: |

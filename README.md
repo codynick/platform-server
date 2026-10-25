@@ -1,4 +1,4 @@
-# CodyNick Multi-user 0.1.3
+# CodyNick Multi-user 0.1.4
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
@@ -12,7 +12,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.3: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.4: READY`.
 
 ```bash
 sudo tail -n 80 -F /var/log/codynick-multi/install.log
@@ -113,7 +113,7 @@ HTTPS, per-user Linux identities and multi-tenant AI are outside this version.
 `python -m unittest discover -s tests` checks generation, preserved data and process
 separation. Linux CI also lints PHP and tests real independent process groups.
 `python tools/seal.py` regenerates the release file hashes. Publish immutable tag
-`v0.1.3-web-passwords` with main. Never move a published tag; make a new release.
+`v0.1.4-mobile-ide` with main. Never move a published tag; make a new release.
 Keep the fixed command unchanged on later versions. Older source directories are
 retained; automated downgrade selection is not implemented in this initial edition.
 
@@ -143,3 +143,13 @@ with confirmation, CSRF protection and affected-session invalidation. Authentica
 refresh no longer restarts a user's program, including terminal password changes.
 The installer creates its log file before launching the background worker and uses
 retrying log follow, avoiding the first-install "No such file" display race.
+
+## Changes in 0.1.4
+
+Python IDE compact layout only at viewport widths of 760px and below. Files move
+into a toggled drawer that closes after file selection; Run and Stop stay in the
+visible toolbar. The compact Run label reads "Run"; desktop retains "Run this File".
+Editor/terminal sizing adapts to portrait, landscape and browser viewport changes.
+Desktop geometry above the breakpoint, script controls, account isolation and
+other tools are unchanged. Browser tests compare desktop bounds with the old layout
+and exercise real Run/Stop plus Files at phone and landscape sizes.

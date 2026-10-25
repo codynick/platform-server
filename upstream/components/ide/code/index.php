@@ -310,15 +310,18 @@ if ($action !== '') {
 </style>
 <link rel="stylesheet" href="ansi-terminal.css?v=0.3.0">
 <script src="ansi-terminal.js?v=0.3.0"></script>
+<link rel="stylesheet" href="mobile.css?v=0.1.4">
+<script src="mobile.js?v=0.1.4" defer></script>
 <link rel="icon" type="image/x-icon" href="/assets/favicon.ico"><link rel="stylesheet" href="/assets/tool-navigation.css"></head>
 <body>
 <header>
+  <button id="mobileFilesToggle" class="mobile-files-toggle" type="button" aria-controls="fileSidebar" aria-expanded="false" title="Show or hide files">Files</button>
   <div class="logo"><?php if (defined('IDE_LOGO_URL') && IDE_LOGO_URL): ?><img src="<?= htmlspecialchars(IDE_LOGO_URL) ?>" alt="Logo"><?php else: ?>IDE<?php endif; ?></div>
   <div class="title"><?= htmlspecialchars(IDE_TITLE) ?></div>
   <a class="codynick-home-button" href="/">Main Panel</a>
 </header>
 <div class="app">
-  <aside class="sidebar">
+  <aside class="sidebar" id="fileSidebar">
     <div class="sidebar-head">
       <button id="newFile" title="New file" aria-label="New file"></button>
       <button id="newFolder" title="New folder" aria-label="New folder"></button>
