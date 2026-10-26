@@ -24,6 +24,13 @@ const {chromium} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
       current = html;
       await page.goto('http://preview.local/');
       await page.waitForFunction(()=>Array.from(document.images).every(image=>image.complete&&image.naturalWidth>0));
+      if(kind==='menu' && name==='mobile') {
+        await page.locator('.mobile-menu').click();
+        if(await page.locator('.mobile-menu').getAttribute('aria-expanded')!=='true') throw Error('Mobile menu did not open');
+        await page.locator('#mobileNav a[href="#tools"]').click();
+        await page.locator('.mobile-menu').click();
+        await page.evaluate(()=>window.scrollTo(0,0));
+      }
       if(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)) throw Error('Horizontal overflow');
       await page.screenshot({path:path.join(root,'test-output',kind+'-'+name+'.png'),fullPage:true});
     }

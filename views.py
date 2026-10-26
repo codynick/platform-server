@@ -1,5 +1,7 @@
 """Shared branded portal views, matching the original CodyNick tool panel."""
 import html
+import re
+from pathlib import Path
 from urllib.parse import urlencode
 
 
@@ -15,18 +17,11 @@ def frame(title, content, name='', navigation=''):
 
 
 def panel_page(name, role, version):
-    tools = [('/code/', 'On-Device IDE'), ('/blocks/', 'Block Coding'),
-             ('/simulator/', 'Gadget Simulator'), ('/dashboard/', 'On-Device Dashboard'),
-             ('/guide.html', 'Guide'), ('/account/password', 'Change Password')]
-    if role == 'admin':
-        tools.append(('/admin/users', 'Users'))
-    links = ''.join(f'<a class="link-card" href="{url}"><span class="link-title">{label}</span><span aria-hidden="true">&#8599;</span></a>'
-                    for url, label in tools)
-    details = f'''<dl class="account-details"><div><dt>Account</dt><dd>{html.escape(name)}</dd></div>
-<div><dt>Role</dt><dd>{'Administrator' if role == 'admin' else 'Student'}</dd></div>
-<div><dt>Software Version</dt><dd>{html.escape(version)}</dd></div></dl>'''
-    return frame('Main Panel', '<nav class="links">' + links + '</nav>' + details, name,
-                 '<form method="post" action="/logout"><button type="submit" class="secondary">Sign Out</button></form>')
+    template = Path(__file__).with_name('panel.html').read_text(encoding='utf-8')
+    values = {'NAME': html.escape(name), 'ROLE': 'Administrator' if role == 'admin' else 'Student',
+              'INITIALS': html.escape(name[:2].upper()), 'VERSION': html.escape(version),
+              'ADMIN': '<a class="quick-link" href="/admin/users">Manage students <span class="push">&#8599;</span></a>' if role == 'admin' else ''}
+    return re.sub(r'@@(NAME|ROLE|INITIALS|VERSION|ADMIN)@@', lambda match: values[match[1]], template)
 
 
 def users_page(name, accounts, csrf, error='', created='', updated=''):

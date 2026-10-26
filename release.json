@@ -1,21 +1,24 @@
 {
-  "version": "0.1.5",
+  "version": "0.1.6",
   "files": {
     "admin_service.py": "e16f9c658b3375bd46ec98f52169e8d29dcd00e15adac0cb608aea50378b7bd9",
     "gateway.py": "455f04cfe83b8f99b57dc73c4a69e61616479c363153c7e5322bd096e06951e1",
     "guide.html": "314527ec35ee46b106ff67f9cd14f00a4be35c033b9df004fd134fe6653041ed",
-    "install.py": "1507b22685efac607dbb5ae3f688fb46cf23e14cbb303dbed3b865f79e972172",
+    "install.py": "1457e541bdda694aa02a42272de1beefee2b615c08f215c78a7afbf8ad2cdcd3",
     "multi.css": "d80d270e127a74df7c6362e3353e17d55709aba559dfcf7ce430bad7c7e937aa",
-    "README.md": "479467324a23a635952bd668e615b0b836dd75347286cbde9813d52e1be7cb26",
+    "panel.html": "811cd53446143152c5e77c4e010dbea47c593732878d4215578cf85f9efe253d",
+    "README.md": "c6f965a3db87dacda14d1ff99eef063a09b09aa0dfa0063c74c6bab63e4e1c50",
     "runner.py": "833a7e6bf5709481bc4c2eebbf2b934da6a10e79edf672a93d1c073244ff2cee",
-    "setup.sh": "6fc8e809c453944d5c264a5ff7bcc41c162b1013caaf047f42e76dacde786d13",
+    "setup.sh": "c9e6c2f7bdfe5e3551a28106369c3612b7ba9ff95a01d751a707476c61988cb9",
     "tests/test_gateway.py": "616f3e3be895a5216cfa81f06e12aa7e0fbc952b9557a253c21ce39272eaf934",
     "tests/test_multi.py": "b9312073524faec01e12cb3c22ffd11bc07542c2460b9089d3bd0e939a1a21b3",
+    "tests/test_panel.py": "2418d0976172e2d39c607267af150dcc1159f509d58e975237e295de54819bfe",
     "tests/test_simulator_blocks.py": "55f0797d90125dca3ac9c1ed8c9a09fb08e48f6f7557789f75e3dc04a2996052",
     "tests/vm_acceptance.py": "e03d76675f5de4aa30f41f24159fa7b43428effe25daf4c5e8c2278475869c5b",
     "tools/ci_accounts.py": "266088b654ae86cb12f23e28fe11939a1bf23e7c765995bcac393e57cdba52bc",
-    "tools/preview.cjs": "cff44da12e22d8afdbf473c335893b1dfd7dc0dfeb64edebcdcbe709e682889c",
-    "tools/seal.py": "ee5cda044848c02ce65c4654dc39d06ac1434f36252cf2b0c100cbe7f775bcae",
+    "tools/import_panel.py": "f5d0b627a9520a871fcf2c02fed72c65e8ed5080b1a7e89fe51f83e9052cc6a3",
+    "tools/preview.cjs": "88cd92d750ae768cfdac796109034668777355cba966ca86591719ac93408768",
+    "tools/seal.py": "21bfba94c797d933aaa7db1f9d21bba5c77f0a5981d562c32e63384323e3a773",
     "tools/test_block_simulator.cjs": "c10ebdc7eb2cce2bf54dc1b74c4c5b4cd73494b5d5c14dbe86d3324ca93eade9",
     "tools/test_execution.cjs": "5d20fc031870157500133a0981e77c9676c830badfcb412b0b0f84b88e0fcb1f",
     "tools/test_mobile.cjs": "da2d6e39d1e67a79f58ec67da929603bdb3e8de50b4f8f307cd9bd3bb9498ac8",
@@ -171,6 +174,6 @@
     "upstream/components/sprite-stage/codynick-sprite-stage.service": "41f957860163a1a0e004456bb6ed23d517cf775bdd2c1081f92bf830513d7128",
     "upstream/components/sprite-stage/health_check.py": "4ab9f2d5b622bc966ab054d7166745615c1fa3468c8ac4433202d080dcaef856",
     "upstream/components/sprite-stage/server.py": "5e11077328259a64d8d82a3259e17de558d018ca0fa9294a7abd1eb1d217313a",
-    "views.py": "88aaae1c77590b0a81356aaac041305fdbfdb1dfb34f3c24b13f506655395e4d"
+    "views.py": "a97ef995907d289b561e18593795d87317ab4848479330c11d0bfb2049446f47"
   }
 }

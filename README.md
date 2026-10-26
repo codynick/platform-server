@@ -1,4 +1,11 @@
-# CodyNick Multi-user 0.1.5
+# CodyNick Multi-user 0.1.6
+
+## New in 0.1.6
+
+Main Panel-only Bootstrap facelift based on the supplied design, with offline
+embedded images and styles, live account/role/version, real tool links and POST
+sign-out. Student accounts do not see user management. Login, password pages,
+editors, simulation and dashboard behavior are unchanged.
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
@@ -12,7 +19,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.5: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.6: READY`.
 
 ```bash
 sudo tail -n 80 -F /var/log/codynick-multi/install.log
