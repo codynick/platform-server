@@ -43,6 +43,7 @@ jobs:
           node /tmp/codynick-mobile-check/node_modules/playwright/cli.js install --with-deps chromium
           node tools/test_mobile.cjs
           node tools/test_block_simulator.cjs
+          node tools/test_dashboard_preview.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

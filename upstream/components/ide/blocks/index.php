@@ -651,13 +651,14 @@ if ($api === 'run') {
   <main class="main stage-layout">
     <section class="workspace-shell">
       <div class="design-bar"><label for="designName">Design</label><input id="designName" type="text" maxlength="120" placeholder="Untitled" autocomplete="off">
-        <div class="execution-controls"><label class="execution-label" for="executionTarget">Run on</label><select id="executionTarget" aria-label="Run on"><option value="hardware">Hardware</option><option value="simulator">Simulator</option></select><a class="codynick-home-button" href="/simulator/" target="_blank" rel="noopener">Open Simulator</a></div>
+        <div class="execution-controls"><label class="execution-label" for="executionTarget">Run on</label><select id="executionTarget" aria-label="Run on"><option value="hardware">Hardware</option><option value="simulator">Simulator</option></select><a class="codynick-home-button" href="/simulator/" target="_blank" rel="noopener">Open Simulator</a><a class="codynick-home-button" href="/dashboard/" target="_blank" rel="noopener">Open Dashboard</a></div>
       </div>
       <div class="panel-head">
-        <nav class="toolbox-modes" role="tablist" aria-label="Block categories" aria-orientation="horizontal">
+        <nav class="toolbox-modes" style="flex-wrap:wrap" role="tablist" aria-label="Block categories" aria-orientation="horizontal">
           <button id="generalToolboxTab" role="tab" aria-selected="true" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('general')">General</button>
           <button id="spriteToolboxTab" role="tab" aria-selected="false" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('sprites')">Sprites</button>
           <button id="hardwareToolboxTab" role="tab" aria-selected="false" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('hardware')">Hardware</button>
+          <button id="dashboardToolboxTab" role="tab" aria-selected="false" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('dashboard')">Dashboard</button>
         </nav>
         <span id="workspaceStatus" class="status">Loading…</span>
       </div>
@@ -706,6 +707,7 @@ if ($api === 'run') {
 <script src="/blocks/stage.js"></script>
 <script src="/blocks/designs.js"></script>
 <script src="/blocks/execution.js"></script>
+<script src="/blocks/dashboard.js"></script>
 <script>
 const BLOCK_PACKAGES = <?= json_encode($BLOCK_PACKAGES, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 const BLOCK_WARNINGS = <?= json_encode($BLOCK_WARNINGS, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
@@ -908,10 +910,10 @@ function makeBlock(type) {
 let toolboxMode = 'general';
 
 function selectToolboxMode(mode) {
-  if (!['general', 'sprites', 'hardware'].includes(mode)) return;
+  if (!['general', 'sprites', 'hardware', 'dashboard'].includes(mode)) return;
   toolboxMode = mode;
   workspace.updateToolbox(buildToolbox());
-  for (const name of ['general', 'sprites', 'hardware']) {
+  for (const name of ['general', 'sprites', 'hardware', 'dashboard']) {
     const id = name === 'sprites' ? 'spriteToolboxTab' : name + 'ToolboxTab';
     document.getElementById(id).setAttribute('aria-selected', String(name === mode));
   }
@@ -1015,7 +1017,7 @@ function buildToolbox() {
       }
   ];
   return {kind: 'categoryToolbox', contents: toolboxMode === 'general' ? general
-    : toolboxMode === 'sprites' ? SpritePrototype.categories() : Array.from(dynamicCategories.values())};
+    : toolboxMode === 'sprites' ? SpritePrototype.categories() : toolboxMode === 'dashboard' ? DashboardBlocks.categories() : Array.from(dynamicCategories.values())};
 }
 
 const CodyNickTheme = Blockly.Theme.defineTheme('codynickScratchLike', {
@@ -1071,6 +1073,7 @@ function initBlockly() {
   ensureColourFieldSupport();
   SpritePrototype.definitions();
   defineTimerBlocks();
+  DashboardBlocks.definitions();
   Blockly.defineBlocksWithJsonArray([
     {
       type: 'cn_wait', message0: 'wait %1 seconds',
@@ -1257,6 +1260,8 @@ function blockToPythonValue(block) {
 
 function blockToPythonStatement(block) {
   if (!block) return '';
+  const dashboardStatement = DashboardBlocks.statement(block, valueToCode);
+  if (dashboardStatement !== null) return dashboardStatement;
   const spriteStatement = SpritePrototype.statement(block, valueToCode);
   if (spriteStatement !== null) return spriteStatement;
   if (block.type === 'cn_timer_reset') return '_codynick_timer_start = time.monotonic()\n';
@@ -1345,6 +1350,7 @@ function generatePython() {
   const loopBlocks = topBlocks.filter(b => b.type === 'cn_event_loop');
   const gadgetBlocks = ExecutionTarget.programBlocks(workspace, dynamicBlockSpecs);
   const usesHardware = gadgetBlocks.length > 0;
+  const usesDashboard = [...startBlocks, ...loopBlocks].some(root => root.getDescendants(false).some(block => block.type.startsWith('dash_')));
 
   let startCode = '';
   for (const b of startBlocks) {
@@ -1365,6 +1371,7 @@ function generatePython() {
     '# Do not edit manually if you plan to regenerate it from blocks.',
     '',
     'import time',
+    usesDashboard ? DashboardBlocks.initialization() : '',
     'from CodyNick import *',
     usesStage ? 'from SpriteStage import SpriteStage' : '',
     '',

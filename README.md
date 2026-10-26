@@ -1,4 +1,17 @@
-# CodyNick Multi-user 0.1.7
+# CodyNick Multi-user 0.1.8
+
+## New in 0.1.8: Blockly Dashboard
+
+The tested Blockly Dashboard is now included in the full installer. It adds a Dashboard top-level tab with
+Setup, Info, Gauge and Graph folders, larger centered info/gauge defaults,
+and Open Dashboard. Blocks create info/gauge/graph widgets, update values, append
+samples, limit history, set gauge range, and set appearance/font properties.
+Dashboard-only designs do not open hardware or require simulator gadgets. Widgets
+are per-account and retain their values after Stop. Existing generic widget blocks
+remain compatible. Upload `CodyNick examples/blockly/dashboard_counter.codynick`
+in Block Coding, click Open Dashboard, then Run for a timer and graph demo.
+This upgrade includes all previously tested local Dashboard changes; the separate
+local patch is no longer needed. Accounts, saved designs and student files persist.
 
 ## New in 0.1.7
 
@@ -29,7 +42,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.7: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.8: READY`.
 
 ```bash
 sudo tail -n 80 -F /var/log/codynick-multi/install.log

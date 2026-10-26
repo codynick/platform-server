@@ -18,7 +18,7 @@ import time
 import urllib.request
 import urllib.error
 
-VERSION = '0.1.7'
+VERSION = '0.1.8'
 SOURCE = Path(__file__).resolve().parent
 CONFIG = Path('/etc/codynick-multi')
 DATA = Path('/var/lib/codynick-multi')
