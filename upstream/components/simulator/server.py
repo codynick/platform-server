@@ -101,8 +101,8 @@ class State:
 
     def require(self, gadget):
         if gadget not in self.scene['gadgets']:
-            names = {'seven': 'Seven-segment display', 'temperature': 'Temperature sensor', 'matrix': 'LED matrix', 'joystick': 'Stand-Alone joystick', 'ultrasonic': 'Ultrasonic sensor', 'soil': 'Soil-moisture sensor', 'wifi': 'Wi-Fi/IoT gadget'}
-            self.error = f"Add {names[gadget]} to the stage, then run the Python script again."
+            names = {'cjp': 'CodyJoy Pro', 'seven': 'Seven-segment display', 'temperature': 'Temperature sensor', 'matrix': 'LED matrix', 'joystick': 'Stand-Alone joystick', 'ultrasonic': 'Ultrasonic sensor', 'soil': 'Soil-moisture sensor', 'wifi': 'Wi-Fi/IoT gadget'}
+            self.error = f"Add {names[gadget]} to the simulation space, then re-run the app."
             raise ValueError(self.error)
 
     def expire(self):
@@ -122,6 +122,15 @@ class State:
         with self.lock:
             self.expire()
             action = data.get('action')
+            if action == 'check_gadgets':
+                gadgets = data.get('gadgets')
+                allowed = {'cjp', 'seven', 'temperature', 'matrix', 'joystick', 'ultrasonic', 'soil', 'wifi'}
+                if not isinstance(gadgets, list) or len(gadgets) > 8 or any(not isinstance(g, str) or g not in allowed for g in gadgets):
+                    raise ValueError('Unsupported simulator gadget.')
+                for gadget in gadgets:
+                    self.require(gadget)
+                self.error = ''
+                return {'ok': True}
             if action == 'scene':
                 if self.session:
                     # Arrange freely, but stop Python before changing its hardware set.

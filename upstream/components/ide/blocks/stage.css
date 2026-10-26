@@ -1,8 +1,9 @@
 .main.stage-layout { grid-template-columns:minmax(0,1fr) minmax(310px,400px); }
+.execution-label{font-size:13px;font-weight:600;white-space:nowrap}.execution-controls{display:flex;align-items:center;gap:8px;flex:0 0 auto;max-width:100%}.execution-controls select{height:34px;padding:0 8px;border:1px solid #bdcbd5;border-radius:4px;font:13px Arial,sans-serif;background:white;color:#172e38}.execution-controls .codynick-home-button{font-size:13px;padding:7px 8px}
 .workspace-shell { display:grid; grid-template-rows:auto auto minmax(0,1fr); }
-.design-bar { display:flex; align-items:center; gap:10px; padding:8px 14px; background:#fff; border-bottom:1px solid #d0d7de; }
+.design-bar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:8px 14px; background:#fff; border-bottom:1px solid #d0d7de; }
 .design-bar label { font-size:13px; font-weight:600; }
-.design-bar input { width:100%; min-width:0; max-width:400px; padding:6px 8px; border:1px solid #aebec4; border-radius:4px; }
+.design-bar input { flex:1 1 180px; width:100%; min-width:0; max-width:400px; padding:6px 8px; border:1px solid #aebec4; border-radius:4px; }
 .design-dialog { width:min(420px,calc(100vw - 40px)); box-sizing:border-box; border:1px solid #9badb8; border-radius:6px; padding:18px; color:#172e38; background:#fff; }
 .design-dialog::backdrop { background:rgba(0,0,0,.4); }
 .design-dialog h2 { margin:0 0 14px; font-size:18px; }

@@ -1,4 +1,4 @@
-# CodyNick Multi-user 0.1.4
+# CodyNick Multi-user 0.1.5
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
@@ -12,7 +12,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.4: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.5: READY`.
 
 ```bash
 sudo tail -n 80 -F /var/log/codynick-multi/install.log
@@ -113,7 +113,7 @@ HTTPS, per-user Linux identities and multi-tenant AI are outside this version.
 `python -m unittest discover -s tests` checks generation, preserved data and process
 separation. Linux CI also lints PHP and tests real independent process groups.
 `python tools/seal.py` regenerates the release file hashes. Publish immutable tag
-`v0.1.4-mobile-ide` with main. Never move a published tag; make a new release.
+`v0.1.5-block-simulator` with main. Never move a published tag; make a new release.
 Keep the fixed command unchanged on later versions. Older source directories are
 retained; automated downgrade selection is not implemented in this initial edition.
 
@@ -153,3 +153,26 @@ Editor/terminal sizing adapts to portrait, landscape and browser viewport change
 Desktop geometry above the breakpoint, script controls, account isolation and
 other tools are unchanged. Browser tests compare desktop bounds with the old layout
 and exercise real Run/Stop plus Files at phone and landscape sizes.
+
+## Changes in 0.1.5: Blockly to gadget simulator
+
+In Block Coding, select **Simulator** under **Run on**, next to the design name.
+Choose **Open Simulator**, add the required gadgets to the simulation space, then
+press **Run** in Blockly. Sprite blocks can run alongside the simulated gadgets.
+The existing per-account process and simulator keep users independent; no USB
+serial connection is opened in Simulator mode and there is no hardware fallback.
+
+Mode is saved with autosave, named designs and downloaded `.codynick` files.
+Older designs without a mode remain on **Hardware** for compatibility. Changing
+the selector updates the next generated program, not a currently running script.
+
+Before a simulated program starts, required gadgets are checked. If a gadget is
+missing, the terminal and simulator report: **Add [gadget] to the simulation space,
+then re-run the app.** No session is locked by that preflight error, so users can
+add the gadget and rerun without an extra Stop. Stop now sends a graceful interrupt
+before the existing forced-stop fallback, releasing simulation sessions for quick reruns.
+
+Supported: CJP LEDs/joystick/buzzer, standalone joystick, LED matrix, standalone
+seven-segment and ultrasonic devices, temperature, soil moisture, and Wi-Fi/IoT.
+Motion/RFID/keypad, legacy sensor aliases, library updates and unsupported device
+IDs are rejected clearly in Simulator mode rather than accessing physical hardware.

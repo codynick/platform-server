@@ -20,7 +20,7 @@ class Programs:
     def stop(self):
         if self.process is not None:
             try:
-                os.killpg(self.process.pid, signal.SIGTERM)
+                os.killpg(self.process.pid, signal.SIGINT)
             except ProcessLookupError:
                 pass
             try:

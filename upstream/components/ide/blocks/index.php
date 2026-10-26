@@ -650,7 +650,9 @@ if ($api === 'run') {
 
   <main class="main stage-layout">
     <section class="workspace-shell">
-      <div class="design-bar"><label for="designName">Design</label><input id="designName" type="text" maxlength="120" placeholder="Untitled" autocomplete="off"></div>
+      <div class="design-bar"><label for="designName">Design</label><input id="designName" type="text" maxlength="120" placeholder="Untitled" autocomplete="off">
+        <div class="execution-controls"><label class="execution-label" for="executionTarget">Run on</label><select id="executionTarget" aria-label="Run on"><option value="hardware">Hardware</option><option value="simulator">Simulator</option></select><a class="codynick-home-button" href="/simulator/" target="_blank" rel="noopener">Open Simulator</a></div>
+      </div>
       <div class="panel-head">
         <nav class="toolbox-modes" role="tablist" aria-label="Block categories" aria-orientation="horizontal">
           <button id="generalToolboxTab" role="tab" aria-selected="true" aria-controls="toolboxWorkspace" onclick="selectToolboxMode('general')">General</button>
@@ -703,6 +705,7 @@ if ($api === 'run') {
 
 <script src="/blocks/stage.js"></script>
 <script src="/blocks/designs.js"></script>
+<script src="/blocks/execution.js"></script>
 <script>
 const BLOCK_PACKAGES = <?= json_encode($BLOCK_PACKAGES, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
 const BLOCK_WARNINGS = <?= json_encode($BLOCK_WARNINGS, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?>;
@@ -1337,10 +1340,11 @@ function renderDynamicBlock(block) {
 function generatePython() {
   const allBlocks = workspace.getAllBlocks(false);
   const usesStage = allBlocks.some(block => block.type.startsWith('sprite_'));
-  const usesHardware = allBlocks.some(block => dynamicBlockSpecs.has(block.type));
   const topBlocks = workspace.getTopBlocks(true);
   const startBlocks = topBlocks.filter(b => b.type === 'cn_event_start');
   const loopBlocks = topBlocks.filter(b => b.type === 'cn_event_loop');
+  const gadgetBlocks = [...new Set([...startBlocks, ...loopBlocks].flatMap(block => block.getDescendants(false)))].filter(block => dynamicBlockSpecs.has(block.type));
+  const usesHardware = gadgetBlocks.length > 0;
 
   let startCode = '';
   for (const b of startBlocks) {
@@ -1366,13 +1370,15 @@ function generatePython() {
     '',
     '_codynick_timer_start = time.monotonic()',
     usesStage ? SpritePrototype.initialization() : '',
-    usesHardware ? 'cody = CN()' : 'cody = None',
+    usesHardware ? ExecutionTarget.initialization(gadgetBlocks) : 'cody = None',
     '',
     'try:',
     indent('# When CodyNick starts'),
     indent(startCode),
     indent('# Main Loop'),
     indent('while True:\n' + indent(loopCode)),
+    'except KeyboardInterrupt:',
+    '    pass',
     'finally:',
     '    try:',
     '        cody.close()',
@@ -1555,6 +1561,7 @@ async function loadServerWorkspace() {
 initBlockly();
 SpritePrototype.initialize();
 NamedDesigns.initialize();
+ExecutionTarget.initialize();
 loadServerWorkspace();
 </script>
 </body>

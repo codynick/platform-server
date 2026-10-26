@@ -21,6 +21,7 @@ jobs:
       - run: sudo apt-get update && sudo apt-get install -y php-cli
       - run: python -m unittest discover -s tests -v
       - run: bash -n setup.sh
+      - run: node tools/test_execution.cjs
       - run: find upstream/components/ide -name '*.php' -print0 | xargs -0 -n1 php -l
       - name: Install on disposable x86 Ubuntu VM
         run: |
@@ -41,11 +42,12 @@ jobs:
           npm install --prefix /tmp/codynick-mobile-check playwright
           node /tmp/codynick-mobile-check/node_modules/playwright/cli.js install --with-deps chromium
           node tools/test_mobile.cjs
+          node tools/test_block_simulator.cjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: mobile-ide-screenshots
-          path: test-output/ide-*.png
+          path: test-output/*.png
           if-no-files-found: ignore
       - name: Failure diagnostics
         if: failure()

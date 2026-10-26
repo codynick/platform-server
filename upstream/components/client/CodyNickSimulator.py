@@ -9,7 +9,7 @@ import urllib.error
 
 
 class Simulator:
-    def __init__(self):
+    def __init__(self, required_gadgets=None):
         self.url = os.environ.get('CODYNICK_SIM_URL', 'http://127.0.0.1:8091')
         self.token = Path(os.environ.get('CODYNICK_SIM_TOKEN_FILE', '/opt/codynick-simulator/token')).read_text().strip()
         self.session = None
@@ -18,6 +18,8 @@ class Simulator:
         self.buffer = b''
         self.error = None
         self.stop = threading.Event()
+        if required_gadgets is not None:
+            self._request('check_gadgets', gadgets=list(required_gadgets))
         self.session = self._request('open')['session']
         self.thread = threading.Thread(target=self._heartbeat, daemon=True)
         self.thread.start()
