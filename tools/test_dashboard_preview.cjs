@@ -47,7 +47,7 @@ html=html.replace(/<\?= json_encode\(\$BLOCK_PACKAGES,[\s\S]*?\?>/,JSON.stringif
     await page.waitForFunction(async()=>{const data=await(await fetch('/dashboard/cards.php?action=state')).json();const graph=data.cards.find(c=>c.title==='History');return graph&&JSON.parse(graph.value).length>=2;});
     const cards=await page.evaluate(async()=>(await(await fetch('/dashboard/cards.php?action=state')).json()).cards);
     const info=cards.find(c=>c.title==='Elapsed seconds');
-    if(!info||Number(info.font_size)!==32||info.horizontal_alignment!=='center'||info.vertical_alignment!=='center')throw Error('Dashboard defaults did not reach database');
+    if(!info||Number(info.font_size)!==32||info.horizontal_alignment!=='center'||info.vertical_alignment!=='center')throw Error('Dashboard defaults did not reach database: '+JSON.stringify(cards));
     await page.evaluate(()=>postJson('?api=stop',{}));
     const after=await page.evaluate(async()=>(await(await fetch('/dashboard/cards.php?action=state')).json()).cards);
     if(after.length!==2)throw Error('Stop removed dashboard widgets');
