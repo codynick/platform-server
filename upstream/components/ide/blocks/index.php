@@ -762,7 +762,7 @@ function safeName(name) {
 
 function variableName(block, fieldName) {
   const id = block.getFieldValue(fieldName);
-  const variable = block.workspace.getVariableById(id);
+  const variable = block.workspace.getVariableMap().getVariableById(id);
   return safeName(variable ? variable.name : id);
 }
 
@@ -790,7 +790,9 @@ function blockFieldValue(block, arg) {
 function buildDynamicBlockJson(spec) {
   const args0 = [];
   for (const arg of (spec.args || [])) {
-    if (arg.kind === 'number') {
+    if (arg.kind === 'value') {
+      args0.push({type: 'input_value', name: arg.name, check: arg.check || null});
+    } else if (arg.kind === 'number') {
       args0.push({
         type: 'field_number',
         name: arg.name,
@@ -1334,6 +1336,10 @@ function renderDynamicBlock(block) {
   let code = String(spec.python || '');
 
   for (const arg of (spec.args || [])) {
+    if (arg.kind === 'value') {
+      code = code.replaceAll('{' + arg.name + '}', valueToCode(block, arg.name, '0'));
+      continue;
+    }
     const raw = blockFieldValue(block, arg);
     const value = fieldPythonValue(arg, raw);
     code = code.replaceAll('{' + arg.name + '}', value);

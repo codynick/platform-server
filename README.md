@@ -1,4 +1,15 @@
-# CodyNick Multi-user 0.1.8
+# CodyNick Multi-user 0.1.9
+
+## New in 0.1.9: Pre-installed Demo Designs
+
+Four simple Simulator + Dashboard designs in `CodyNick examples/blockly`:
+temperature monitor (including live seven-segment), temperature traffic light,
+parking assistant and joystick status. See `SIMULATION_DEMOS.md` for required
+gadgets and thresholds. Includes a separate live-value seven-segment block
+and variable-map API compatibility fix. Demos are pre-installed in every user's
+Load list without replacing saved designs or edited demos. Open Block Coding,
+click Load, and choose Demo 1, 2, 3 or 4. No file upload or separate local patch
+is needed. Both existing accounts and newly added accounts receive the demos.
 
 ## New in 0.1.8: Blockly Dashboard
 
@@ -42,7 +53,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.8: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.9: READY`.
 
 ```bash
 sudo tail -n 80 -F /var/log/codynick-multi/install.log

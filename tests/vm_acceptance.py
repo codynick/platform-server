@@ -67,6 +67,12 @@ with destination_client.open('http://127.0.0.1/blocks/') as response:
     assert urllib.parse.urlsplit(response.url).path == '/login'
 
 for port, name in ((80, 'alice'), (80, 'bob')):
+    demos = json.loads(request(port, '/blocks/designs.php?action=list', name))['designs']
+    assert len([d for d in demos if d['name'].startswith('Demo ')]) == 4
+    for demo in demos:
+        if demo['name'].startswith('Demo '):
+            saved_demo = json.loads(request(port, '/blocks/designs.php?action=load&name=' + urllib.parse.quote(demo['name']), name))
+            assert saved_demo['workspace']['codynick_execution']['target'] == 'simulator'
     for path in ('/', '/code/', '/blocks/', '/dashboard/', '/simulation/', '/simulation/app.js'):
         assert request(port, path, name), (name, path)
     assert 'scene' in json.loads(request(port, '/simulation/state', name))

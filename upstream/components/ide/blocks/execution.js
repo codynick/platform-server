@@ -14,8 +14,8 @@ const ExecutionTarget = (() => {
       else if (type.startsWith('cn_joystick_')) {
         if (["'CJP'", '5'].includes(device)) gadget = 'cjp';
         else if (["'STANDALONE'", '0'].includes(device)) gadget = 'joystick';
-      } else if (['cn_seven_segment_display', 'cn_ultrasonic_read'].includes(type)) {
-        if (["'STANDALONE'", '0'].includes(device)) gadget = type === 'cn_seven_segment_display' ? 'seven' : 'ultrasonic';
+      } else if (['cn_seven_segment_display', 'cn_seven_segment_display_value', 'cn_ultrasonic_read'].includes(type)) {
+        if (["'STANDALONE'", '0'].includes(device)) gadget = type.startsWith('cn_seven_segment_') ? 'seven' : 'ultrasonic';
       } else if (type === 'cn_log') continue;
       if (!gadget) throw Error('Block ' + type + ' / device ' + (device || '') + ' is not supported in Simulator mode. Choose Hardware or remove this block.');
       gadgets.add(gadget);

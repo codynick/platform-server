@@ -18,7 +18,7 @@ import time
 import urllib.request
 import urllib.error
 
-VERSION = '0.1.8'
+VERSION = '0.1.9'
 SOURCE = Path(__file__).resolve().parent
 CONFIG = Path('/etc/codynick-multi')
 DATA = Path('/var/lib/codynick-multi')
@@ -131,6 +131,23 @@ def page(name, role='student'):
     return panel_page(name, role, VERSION)
 
 
+def seed_demo_designs(directory, examples):
+    """Make bundled demos visible in Load without replacing a user's saved copy."""
+    directory.mkdir(parents=True, exist_ok=True)
+    for project in sorted(examples.glob('0[1-4]_*.codynick')):
+        workspace = json.loads(project.read_text(encoding='utf-8'))
+        name = 'Demo ' + str(int(project.name[:2])) + ' - ' + workspace['codynick_design']['name']
+        workspace['codynick_design']['name'] = name
+        target = directory / (hashlib.sha256(name.encode()).hexdigest() + '.json')
+        payload = dict(name=name, workspace=workspace, updated_at=datetime.now(timezone.utc).isoformat())
+        try:
+            with target.open('x', encoding='utf-8') as output:
+                json.dump(payload, output, indent=2)
+                output.write('\n')
+        except FileExistsError:
+            pass
+
+
 def provision(name, account, source=SOURCE, data=DATA):
     validate_name(name)
     home = data / 'users' / name
@@ -176,6 +193,7 @@ def provision(name, account, source=SOURCE, data=DATA):
         write(home / 'token', secrets.token_hex(32), 0o640)
     write(home / 'runtime.json', json.dumps({'sim_port': sim_port, 'sprite_port': sprite_port}))
     (web / 'blocks/data/designs').mkdir(parents=True, exist_ok=True)
+    seed_demo_designs(web / 'blocks/data/designs', upstream / 'examples/blockly')
     if not (web / 'blocks/data/main.json').exists():
         write(web / 'blocks/data/main.json', '{}')
     # Keep the simulator behind the same authenticated web origin.
