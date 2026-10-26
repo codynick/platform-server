@@ -43,12 +43,12 @@ editors, simulation and dashboard behavior are unchanged.
 
 Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
-dashboard. No AI packages/models. No changes to the original Sohaware/rpi repository.
+dashboard. No AI packages/models. No changes to the separate RPi edition.
 
 ## Install or upgrade: one fixed command
 
 ```bash
-wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codynick/rpi-multi-user/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-multi-setup.sh
+wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codynick/platform-server/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-multi-setup.sh
 ```
 
 First installation asks for a web username and password. These are independent
