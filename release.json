@@ -16,7 +16,7 @@
     "tools/ci_accounts.py": "266088b654ae86cb12f23e28fe11939a1bf23e7c765995bcac393e57cdba52bc",
     "tools/preview.cjs": "cff44da12e22d8afdbf473c335893b1dfd7dc0dfeb64edebcdcbe709e682889c",
     "tools/seal.py": "ee5cda044848c02ce65c4654dc39d06ac1434f36252cf2b0c100cbe7f775bcae",
-    "tools/test_block_simulator.cjs": "7fd16184855305a6bac2bccc56d2c1a1e126919aabdd49055f43e967358fc6be",
+    "tools/test_block_simulator.cjs": "4889d9406d8d79955f0f8d99849c93906fb58f98390d0f1fdddc35f49d03fd82",
     "tools/test_execution.cjs": "5d20fc031870157500133a0981e77c9676c830badfcb412b0b0f84b88e0fcb1f",
     "tools/test_mobile.cjs": "da2d6e39d1e67a79f58ec67da929603bdb3e8de50b4f8f307cd9bd3bb9498ac8",
     "upstream/components/client/CodyNick.py": "643f3cb77466f0c636737fa3ff0a40bf2ec66a4b172062c4978dde97d809859b",

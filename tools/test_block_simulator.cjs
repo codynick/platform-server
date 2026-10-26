@@ -5,11 +5,12 @@ const base=process.env.BASE_URL||'http://127.0.0.1';
  const browser=await chromium.launch({headless:true});
  try{
   const page=await browser.newPage();
+  page.on('pageerror',error=>console.error('Blockly browser:',error.message));
   await page.goto(base+'/login');await page.fill('#username','alice');await page.fill('#password','OnlyForEphemeralCI123');
   await Promise.all([page.waitForURL(base+'/'),page.click('button[type=submit]')]);
-  await page.goto(base+'/blocks/');await page.waitForFunction(()=>typeof ExecutionTarget!=='undefined'&&typeof workspace!=='undefined');
+  await page.goto(base+'/blocks/');await page.waitForFunction(()=>typeof ExecutionTarget!=='undefined'&&typeof workspace!=='undefined'&&['Loaded','Saved','New workspace'].includes(document.querySelector('#workspaceStatus').textContent));
   await page.evaluate(()=>{
-   workspace.clear();
+   Blockly.serialization.workspaces.load({blocks:{languageVersion:0}},workspace);
    const xml=Blockly.utils.xml.textToDom(`<xml xmlns="https://developers.google.com/blockly/xml"><block type="cn_event_start"><statement name="DO"><block type="cn_rgb_matrix_set"><field name="led">0</field><field name="color">#00FF00</field><next><block type="cn_led_matrix_display_text"><field name="text">HELLO</field><field name="speed">'medium'</field></block></next></block></statement></block></xml>`);
    Blockly.Xml.domToWorkspace(xml,workspace);
   });
@@ -42,5 +43,5 @@ const base=process.env.BASE_URL||'http://127.0.0.1';
   await page.evaluate(()=>{const b=workspace.newBlock('cn_rfid_readuid');b.initSvg();b.render();const result=ExecutionTarget.initialization([b]);if(!result.includes('not supported'))throw Error('Unsupported gadget was not rejected');b.dispose();});
   fs.mkdirSync('test-output',{recursive:true});await page.screenshot({path:'test-output/block-simulator.png',fullPage:true});
   console.log('Blockly simulator generation, saved mode, missing gadget recovery, LED/matrix output and immediate Stop/Run passed');
- }finally{await browser.close();}
-})().catch(e=>{console.error(e);process.exitCode=1});
+ }finally{await Promise.race([browser.close(),new Promise(resolve=>setTimeout(resolve,5000))]);}
+})().then(()=>process.exit(0)).catch(e=>{console.error(e);process.exit(1)});
