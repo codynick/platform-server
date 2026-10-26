@@ -41,8 +41,30 @@ def request(port, path, name='alice', data=None, json_body=False):
 
 
 with urllib.request.urlopen('http://127.0.0.1/code/') as response:
-    assert response.url.endswith('/login')
+    assert urllib.parse.urlsplit(response.url).path == '/login'
     assert b'Username' in response.read()
+
+with urllib.request.urlopen('http://127.0.0.1/') as response:
+    public = response.read()
+    assert b'Start Creating' in public and b'hero-photo' in public
+    assert b'/admin/users' not in public
+
+# A tool chosen before login remains the destination after authentication.
+destination_client = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+with destination_client.open('http://127.0.0.1/blocks/') as response:
+    assert 'next=%2Fblocks%2F' in response.url
+    assert b'name="next" value="/blocks/"' in response.read()
+form = urllib.parse.urlencode({'username': 'alice', 'password': PASSWORD, 'next': '/blocks/'}).encode()
+with destination_client.open('http://127.0.0.1/login', form) as response:
+    assert urllib.parse.urlsplit(response.url).path == '/blocks/'
+with destination_client.open('http://127.0.0.1/') as response:
+    private = response.read()
+    assert b'practical-workspace' in private and b'account-menu' in private
+    assert b'<section class="hero"' not in private
+with destination_client.open('http://127.0.0.1/logout', b'') as response:
+    assert urllib.parse.urlsplit(response.url).path == '/login'
+with destination_client.open('http://127.0.0.1/blocks/') as response:
+    assert urllib.parse.urlsplit(response.url).path == '/login'
 
 for port, name in ((80, 'alice'), (80, 'bob')):
     for path in ('/', '/code/', '/blocks/', '/dashboard/', '/simulation/', '/simulation/app.js'):

@@ -16,12 +16,44 @@ def frame(title, content, name='', navigation=''):
 <footer>CodyNick Multi-user</footer></body></html>'''
 
 
+def design_template():
+    return Path(__file__).with_name('panel.html').read_text(encoding='utf-8')
+
+
+def portal_header(name='', role='student'):
+    brand = re.search(r'<a class="brand".*?</a>', design_template(), re.S)[0].replace('href="#top"', 'href="/"')
+    account = '<a class="btn btn-primary" href="/login">Sign in</a>'
+    if name:
+        account = f'''<details class="account-menu"><summary aria-label="Account menu for {html.escape(name)}"><span class="account-label">{html.escape(name)}<small>{'Administrator' if role == 'admin' else 'Student'}</small></span><span class="avatar">{html.escape(name[:2].upper())}</span></summary>
+<div class="account-dropdown"><a href="/account/password">Change password</a><form method="post" action="/logout"><button type="submit">Sign out</button></form></div></details>'''
+    return f'''<header class="site-header"><div class="container-fluid container-shell px-3 px-lg-4 d-flex align-items-center justify-content-between gap-3">{brand}<nav class="ribbon-nav"><a href="/">Workspace</a><a href="/#tools">Tools</a><a href="/guide.html">Guide</a></nav>{account}</div></header>'''
+
+
+def portal_document(content, name='', role='student', title='Main Panel'):
+    template = design_template()
+    head = template[:template.index('<body>')].replace('CodyNick | Main Panel', 'CodyNick | ' + title)
+    head = head.replace('</head>', '<link rel="stylesheet" href="/assets/portal.css"></head>')
+    return head + '<body>' + portal_header(name, role) + content + '</body></html>'
+
+
+def welcome_page(version):
+    template = design_template()
+    content = re.search(r'<main\b.*?</main>', template, re.S)[0]
+    content = content[:content.index('>') + 1] + content[content.index('<section class="hero"'):]
+    # Account tools belong to the signed-in workspace, not the public welcome.
+    content = re.sub(r'<div class="col-12 col-lg-5">.*?</section>', '</section>', content, flags=re.S)
+    content = content.replace('col-12 col-lg-7', 'col-12').replace('@@ADMIN@@', '').replace('href="/code/"', 'href="/blocks/"', 1).replace('Start coding', 'Start Creating', 1)
+    return portal_document(content + f'<footer class="footer"><div class="container-fluid container-shell px-3 px-lg-4">CodyNick Multi-user {html.escape(version)}</div></footer>', title='Welcome')
+
+
 def panel_page(name, role, version):
-    template = Path(__file__).with_name('panel.html').read_text(encoding='utf-8')
-    values = {'NAME': html.escape(name), 'ROLE': 'Administrator' if role == 'admin' else 'Student',
-              'INITIALS': html.escape(name[:2].upper()), 'VERSION': html.escape(version),
-              'ADMIN': '<a class="quick-link" href="/admin/users">Manage students <span class="push">&#8599;</span></a>' if role == 'admin' else ''}
-    return re.sub(r'@@(NAME|ROLE|INITIALS|VERSION|ADMIN)@@', lambda match: values[match[1]], template)
+    tools = [('/code/', 'Python IDE', 'Write and run Python'), ('/blocks/', 'Block Coding', 'Build with blocks'),
+             ('/simulator/', 'Gadget Simulator', 'Test virtual gadgets'), ('/dashboard/', 'Dashboard', 'View project data')]
+    cards = ''.join(f'<div class="col-12 col-sm-6 col-xl-3"><a class="tool-card h-100 d-flex flex-column text-decoration-none" href="{url}"><h3>{label}</h3><p>{description}</p><span class="tool-action mt-auto">Open &#8594;</span></a></div>' for url, label, description in tools)
+    admin = '<a class="btn btn-outline-primary" href="/admin/users">Manage students</a>' if role == 'admin' else ''
+    photo = re.search(r'<div class="hero-photo"><img src="([^"]+)"', design_template())[1]
+    content = f'''<div class="workspace-watermark" aria-hidden="true"><img src="{photo}" alt=""></div><main class="container-fluid container-shell px-3 px-lg-4 practical-workspace"><div class="workspace-top"><div><h1>Workspace</h1><p>Welcome, {html.escape(name)}</p></div><a class="btn btn-primary" href="/blocks/">Start Creating</a></div><section id="tools" aria-label="Tools"><div class="row g-3">{cards}</div></section><div class="workspace-actions"><a class="btn btn-outline-primary" href="/guide.html">Help &amp; getting started</a>{admin}</div><footer class="workspace-version">CodyNick Multi-user {html.escape(version)}</footer></main>'''
+    return portal_document(content, name, role)
 
 
 def users_page(name, accounts, csrf, error='', created='', updated=''):
@@ -43,15 +75,16 @@ def users_page(name, accounts, csrf, error='', created='', updated=''):
     return frame('User Management', content, name, '<a class="button secondary" href="/">&#8592; Main Panel</a>')
 
 
-def login_page(error='', changed=False):
+def login_page(error='', changed=False, next_path='/'):
     alert = '<p class="error" role="alert">' + html.escape(error) + '</p>' if error else ''
     if changed:
         alert = '<p class="success" role="status">Password changed. Sign in again.</p>'
-    content = f'''<section class="sign-in"><h2>Sign In</h2><form class="login-form" method="post" action="/login">
-<label for="username">Username</label><input id="username" name="username" autocomplete="username" maxlength="20" required autofocus>
-<label for="password">Password</label><input id="password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
-{alert}<button type="submit">Sign In</button></form></section>'''
-    return frame('Multi-user', content)
+    photo = re.search(r'<div class="hero-photo"><img src="([^"]+)"', design_template())[1]
+    content = f'''<div class="login-background" aria-hidden="true"><img src="{photo}" alt=""></div><main class="login-layout"><section class="login-box"><h1>Sign in</h1><p>Welcome to your CodyNick workspace.</p><form method="post" action="/login"><input type="hidden" name="next" value="{html.escape(next_path)}">
+<label class="form-label" for="username">Username</label><input class="form-control mb-3" id="username" name="username" autocomplete="username" maxlength="20" required autofocus>
+<label class="form-label" for="password">Password</label><input class="form-control mb-3" id="password" name="password" type="password" autocomplete="current-password" maxlength="1024" required>
+{alert}<button class="btn btn-primary w-100" type="submit">Sign In</button></form><a class="back-welcome" href="/">&#8592; Back to welcome</a></section></main>'''
+    return portal_document(content, title='Sign In')
 
 
 def password_page(name, target, csrf, reset=False, error=''):

@@ -1,6 +1,6 @@
 #!/bin/bash
 set -Eeuo pipefail
-TAG=v0.1.6-main-panel
+TAG=v0.1.7-welcome-workspace
 ROOT=/opt/codynick-multi
 if [[ $EUID != 0 ]]; then echo 'Run this installer with sudo bash.'; exit 1; fi
 mkdir -p "$ROOT" /var/log/codynick-multi
@@ -28,4 +28,4 @@ systemd-run --unit=codynick-multi-install --collect \
   /usr/bin/flock /run/lock/codynick-multi-worker.lock /usr/bin/python3 -u "$release/install.py" install
 echo 'Installation continues after SSH disconnects. Do not reboot until READY.'
 echo 'Progress: sudo tail -n 80 -F /var/log/codynick-multi/install.log'
-tail -n 30 -F /var/log/codynick-multi/install.log
+tail -n 30 -F /var/log/codynick-multi/install.log 9>&-

@@ -1,4 +1,14 @@
-# CodyNick Multi-user 0.1.6
+# CodyNick Multi-user 0.1.7
+
+## New in 0.1.7
+
+Public welcome page retains the workshop photos. Start Creating opens Block
+Coding after login; other protected links also preserve their local destination.
+Bootstrap login uses a faded photo backdrop. The signed-in panel is a practical
+tool workspace with a faint photo watermark and the existing ribbon. The top-right
+account menu offers Change password and Sign out on desktop and mobile.
+The installer log viewer no longer inherits the setup lock, so an old tail
+process cannot block subsequent installations. Accounts and student work persist.
 
 ## New in 0.1.6
 
@@ -19,7 +29,7 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
-disconnects. Wait for `CodyNick Multi-user 0.1.6: READY`.
+disconnects. Wait for `CodyNick Multi-user 0.1.7: READY`.
 
 ```bash
 sudo tail -n 80 -F /var/log/codynick-multi/install.log

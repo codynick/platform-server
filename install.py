@@ -18,7 +18,7 @@ import time
 import urllib.request
 import urllib.error
 
-VERSION = '0.1.6'
+VERSION = '0.1.7'
 SOURCE = Path(__file__).resolve().parent
 CONFIG = Path('/etc/codynick-multi')
 DATA = Path('/var/lib/codynick-multi')
@@ -201,6 +201,7 @@ def provision(name, account, source=SOURCE, data=DATA):
             shutil.copy2(src, dst)
     write(web / 'index.html', page(name, account.get('role', 'student')))
     write(web / 'assets/multi.css', (source / 'multi.css').read_text())
+    write(web / 'assets/portal.css', (source / 'portal.css').read_text())
     write(web / 'guide.html', (source / 'guide.html').read_text())
     # HTTP Basic auth's per-account password file is outside the document root.
     write(home / 'passwords', name + ':' + account['hash'] + '\n', 0o640)

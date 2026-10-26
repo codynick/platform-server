@@ -22,6 +22,7 @@ class WorkspaceTests(unittest.TestCase):
         setup = (ROOT / 'setup.sh').read_text()
         self.assertLess(setup.index('touch /var/log/codynick-multi/install.log'), setup.index('systemd-run'))
         self.assertIn('tail -n 30 -F', setup)
+        self.assertIn('tail -n 30 -F /var/log/codynick-multi/install.log 9>&-', setup)
 
     def test_password_changes_check_permissions_without_restarting_scripts(self):
         from contextlib import nullcontext

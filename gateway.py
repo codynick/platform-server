@@ -14,8 +14,8 @@ import subprocess
 import socket
 import threading
 import time
-from urllib.parse import parse_qs, urlsplit
-from views import login_page, panel_page, users_page, password_page
+from urllib.parse import parse_qs, urlsplit, urlencode, unquote
+from views import login_page, panel_page, welcome_page, users_page, password_page
 from install import VERSION
 
 COOKIE = 'codynick_multi_session'
@@ -23,6 +23,15 @@ SESSION_SECONDS = 12 * 60 * 60
 HOP_HEADERS = {'connection', 'keep-alive', 'proxy-authenticate', 'proxy-authorization',
                'te', 'trailer', 'transfer-encoding', 'upgrade'}
 ROOT = Path(__file__).resolve().parent
+
+
+def safe_destination(value):
+    decoded = unquote(value)
+    if not value.startswith('/') or decoded.startswith('//') or '\\' in decoded or any(ord(c) < 32 or ord(c) == 127 for c in decoded):
+        return '/'
+    if urlsplit(value).path in ('/login', '/logout'):
+        return '/'
+    return value
 
 
 def verify_password(password, encoded):
@@ -142,20 +151,24 @@ def handler(sessions):
                     if self.headers.get('Sec-Fetch-Site') == 'cross-site' or (
                         origin and urlsplit(origin).netloc != self.headers.get('Host')):
                         return self.send(403, 'Local requests only')
-                if path in ('/favicon.ico', '/assets/multi.css', '/assets/logo.png'):
+                if path in ('/favicon.ico', '/assets/multi.css', '/assets/portal.css', '/assets/logo.png'):
                     assets = {'/favicon.ico': ('upstream/components/ide/assets/favicon.ico', 'image/x-icon'),
                               '/assets/logo.png': ('upstream/components/ide/assets/logo.png', 'image/png'),
-                              '/assets/multi.css': ('multi.css', 'text/css')}
+                              '/assets/multi.css': ('multi.css', 'text/css'),
+                              '/assets/portal.css': ('portal.css', 'text/css')}
                     asset, kind = assets[path]
                     return self.send(200, (ROOT / asset).read_bytes(), kind)
                 if path == '/login':
                     if self.command in ('GET', 'HEAD'):
-                        return self.send(200, login_page(changed=parse_qs(urlsplit(self.path).query).get('changed') == ['1']))
+                        query = parse_qs(urlsplit(self.path).query)
+                        destination = safe_destination(query.get('next', ['/'])[0])
+                        return self.send(200, login_page(changed=query.get('changed') == ['1'], next_path=destination))
                     form = parse_qs(body.decode('utf-8'))
+                    destination = safe_destination(form.get('next', ['/'])[0])
                     token = sessions.login(form.get('username', [''])[0].strip(), form.get('password', [''])[0])
                     if token is None:
-                        return self.send(401, login_page('Incorrect username or password.'))
-                    return self.send(303, headers=[('Location', '/'), ('Set-Cookie', f'{COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict')])
+                        return self.send(401, login_page('Incorrect username or password.', next_path=destination))
+                    return self.send(303, headers=[('Location', destination), ('Set-Cookie', f'{COOKIE}={token}; Path=/; HttpOnly; SameSite=Strict')])
                 if path == '/logout':
                     if self.command != 'POST':
                         return self.send(405, 'POST required')
@@ -163,7 +176,9 @@ def handler(sessions):
                     return self.send(303, headers=[('Location', '/login'), ('Set-Cookie', f'{COOKIE}=; Max-Age=0; Path=/; HttpOnly; SameSite=Strict')])
                 account = sessions.account(self.token())
                 if account is None:
-                    return self.send(303, headers=[('Location', '/login')])
+                    if path == '/' and self.command in ('GET', 'HEAD'):
+                        return self.send(200, welcome_page(VERSION))
+                    return self.send(303, headers=[('Location', '/login?' + urlencode({'next': safe_destination(self.path)}))])
                 name, settings = account
                 if path in ('/admin/password', '/account/password'):
                     reset = path == '/admin/password'
