@@ -1,5 +1,15 @@
 # CodyNick Multi-user 0.1.9
 
+## Install or Update: One Fixed Command
+
+Run this same command on your Ubuntu server for a first installation, repair or update:
+
+```bash
+wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codynick/platform-server/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-multi-setup.sh
+```
+
+Wait for **`CodyNick Multi-user 0.1.9: READY`** before using the updated system.
+
 ## New in 0.1.9: Pre-installed Demo Designs
 
 Four simple Simulator + Dashboard designs in `CodyNick examples/blockly`:
@@ -45,11 +55,7 @@ Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
 Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
 dashboard. No AI packages/models. No changes to the separate RPi edition.
 
-## Install or upgrade: one fixed command
-
-```bash
-wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codynick/platform-server/main/setup.sh?$(date +%s)" && sudo bash /tmp/codynick-multi-setup.sh
-```
+## Installation Details
 
 First installation asks for a web username and password. These are independent
 of Linux/SSH accounts. Installation then runs in the background across SSH
