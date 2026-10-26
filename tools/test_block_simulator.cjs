@@ -30,7 +30,7 @@ const base=process.env.BASE_URL||'http://127.0.0.1';
    await fetch('/simulation/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'scene',scene})});
    await runProgram();
   });
-  await page.waitForFunction(async()=>{const out=await (await fetch('/code/?action=logs&offset=0')).json();return(out.content||'').includes('then re-run the app');});
+  await page.waitForFunction(()=>document.body.textContent.includes('then re-run the app'));
   const missing=await page.evaluate(async()=>(await (await fetch('/simulation/state')).json()));
   if(missing.connected||!missing.error.includes('Add LED matrix'))throw Error('Missing gadget locked the simulation space');
   await page.evaluate(async()=>{const state=await(await fetch('/simulation/state')).json();state.scene.gadgets.matrix={x:400,y:40};const r=await fetch('/simulation/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'scene',scene:state.scene})});if(!r.ok)throw Error('Cannot add missing gadget');await runProgram();});

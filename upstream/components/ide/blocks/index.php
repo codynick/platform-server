@@ -1343,7 +1343,7 @@ function generatePython() {
   const topBlocks = workspace.getTopBlocks(true);
   const startBlocks = topBlocks.filter(b => b.type === 'cn_event_start');
   const loopBlocks = topBlocks.filter(b => b.type === 'cn_event_loop');
-  const gadgetBlocks = [...new Set([...startBlocks, ...loopBlocks].flatMap(block => block.getDescendants(false)))].filter(block => dynamicBlockSpecs.has(block.type));
+  const gadgetBlocks = ExecutionTarget.programBlocks(workspace, dynamicBlockSpecs);
   const usesHardware = gadgetBlocks.length > 0;
 
   let startCode = '';
@@ -1434,6 +1434,7 @@ async function runProgram() {
   setControlBusy(true);
   try {
     const python = updatePythonPreview(true);
+    await ExecutionTarget.preflight(workspace, dynamicBlockSpecs);
     const data = await postJson('?api=run', {
       python,
       workspace: currentWorkspaceJson()

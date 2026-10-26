@@ -167,9 +167,10 @@ Older designs without a mode remain on **Hardware** for compatibility. Changing
 the selector updates the next generated program, not a currently running script.
 
 Before a simulated program starts, required gadgets are checked. If a gadget is
-missing, the terminal and simulator report: **Add [gadget] to the simulation space,
+missing, Blockly and the simulator report: **Add [gadget] to the simulation space,
 then re-run the app.** No session is locked by that preflight error, so users can
-add the gadget and rerun without an extra Stop. Stop now sends a graceful interrupt
+add the gadget and rerun without an extra Stop. Exported Python also checks at startup.
+Stop now sends a graceful interrupt
 before the existing forced-stop fallback, releasing simulation sessions for quick reruns.
 
 Supported: CJP LEDs/joystick/buzzer, standalone joystick, LED matrix, standalone
