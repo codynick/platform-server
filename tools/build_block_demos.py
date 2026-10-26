@@ -71,7 +71,7 @@ def save(filename, name, start, loop, variables=()):
     ]}, 'codynick_execution': {'target': 'simulator'}, 'codynick_design': {'name': name}}
     if variables:
         value['variables'] = [{'name': item, 'id': item} for item in variables]
-    (DEST / filename).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+    (DEST / filename).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8', newline='\n')
 
 
 save('01_temperature_monitor.codynick', 'Temperature Monitor',
