@@ -26,6 +26,7 @@ systemd-run --unit=codynick-multi-install --collect \
   --property=StandardOutput=append:/var/log/codynick-multi/install.log \
   --property=StandardError=append:/var/log/codynick-multi/install.log \
   /usr/bin/flock /run/lock/codynick-multi-worker.lock /usr/bin/python3 -u "$release/install.py" install
+exec 9>&-
 echo 'Installation continues after SSH disconnects. Do not reboot until READY.'
 echo 'Progress: sudo tail -n 80 -F /var/log/codynick-multi/install.log'
 tail -n 30 -F /var/log/codynick-multi/install.log 9>&-

@@ -23,6 +23,7 @@ class WorkspaceTests(unittest.TestCase):
         self.assertLess(setup.index('touch /var/log/codynick-multi/install.log'), setup.index('systemd-run'))
         self.assertIn('tail -n 30 -F', setup)
         self.assertIn('tail -n 30 -F /var/log/codynick-multi/install.log 9>&-', setup)
+        self.assertLess(setup.index('exec 9>&-'), setup.index('tail -n 30 -F'))
 
     def test_password_changes_check_permissions_without_restarting_scripts(self):
         from contextlib import nullcontext
