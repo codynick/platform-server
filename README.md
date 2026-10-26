@@ -10,51 +10,6 @@ wget -4 -O /tmp/codynick-multi-setup.sh "https://raw.githubusercontent.com/codyn
 
 Wait for **`CodyNick Multi-user 0.1.9: READY`** before using the updated system.
 
-## New in 0.1.9: Pre-installed Demo Designs
-
-Four simple Simulator + Dashboard designs in `CodyNick examples/blockly`:
-temperature monitor (including live seven-segment), temperature traffic light,
-parking assistant and joystick status. See `SIMULATION_DEMOS.md` for required
-gadgets and thresholds. Includes a separate live-value seven-segment block
-and variable-map API compatibility fix. Demos are pre-installed in every user's
-Load list without replacing saved designs or edited demos. Open Block Coding,
-click Load, and choose Demo 1, 2, 3 or 4. No file upload or separate local patch
-is needed. Both existing accounts and newly added accounts receive the demos.
-
-## New in 0.1.8: Blockly Dashboard
-
-The tested Blockly Dashboard is now included in the full installer. It adds a Dashboard top-level tab with
-Setup, Info, Gauge and Graph folders, larger centered info/gauge defaults,
-and Open Dashboard. Blocks create info/gauge/graph widgets, update values, append
-samples, limit history, set gauge range, and set appearance/font properties.
-Dashboard-only designs do not open hardware or require simulator gadgets. Widgets
-are per-account and retain their values after Stop. Existing generic widget blocks
-remain compatible. Upload `CodyNick examples/blockly/dashboard_counter.codynick`
-in Block Coding, click Open Dashboard, then Run for a timer and graph demo.
-This upgrade includes all previously tested local Dashboard changes; the separate
-local patch is no longer needed. Accounts, saved designs and student files persist.
-
-## New in 0.1.7
-
-Public welcome page retains the workshop photos. Start Creating opens Block
-Coding after login; other protected links also preserve their local destination.
-Bootstrap login uses a faded photo backdrop. The signed-in panel is a practical
-tool workspace with a faint photo watermark and the existing ribbon. The top-right
-account menu offers Change password and Sign out on desktop and mobile.
-The installer log viewer no longer inherits the setup lock, so an old tail
-process cannot block subsequent installations. Accounts and student work persist.
-
-## New in 0.1.6
-
-Main Panel-only Bootstrap facelift based on the supplied design, with offline
-embedded images and styles, live account/role/version, real tool links and POST
-sign-out. Student accounts do not see user management. Login, password pages,
-editors, simulation and dashboard behavior are unchanged.
-
-Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
-Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
-dashboard. No AI packages/models. No changes to the separate RPi edition.
-
 ## Installation Details
 
 First installation asks for a web username and password. These are independent
@@ -164,44 +119,54 @@ separation. Linux CI also lints PHP and tests real independent process groups.
 Keep the fixed command unchanged on later versions. Older source directories are
 retained; automated downgrade selection is not implemented in this initial edition.
 
-## Changes in 0.1.1
+## Revision History
 
-Shared form-based sign-in/sign-out and one public address replace per-user public
-ports and browser Basic authentication. Existing 0.1.0 account passwords, files,
-designs and dashboard databases are retained. Old private services remain the same;
-only web listeners, login/routing, installer metadata, tests and guides changed.
+### New in 0.1.9: Pre-installed Demo Designs
 
-## Changes in 0.1.2
+Four simple Simulator + Dashboard designs in `CodyNick examples/blockly`:
+temperature monitor (including live seven-segment), temperature traffic light,
+parking assistant and joystick status. See `SIMULATION_DEMOS.md` for required
+gadgets and thresholds. Includes a separate live-value seven-segment block
+and variable-map API compatibility fix. Demos are pre-installed in every user's
+Load list without replacing saved designs or edited demos. Open Block Coding,
+click Load, and choose Demo 1, 2, 3 or 4. No file upload or separate local patch
+is needed. Both existing accounts and newly added accounts receive the demos.
 
-Administrator-only Users page with Add Student and an account list; no general
-root shell/sudo access is given to the web service. A fixed-action Unix socket
-broker validates administrator role, username and password and provisions students
-using the existing account setup. CSRF tokens protect account-creation forms.
-This is browser-role separation, not a hostile-Python sandbox: the earlier shared
-Linux-identity limitation remains. The main panel now uses the original RPi panel's
-CodyNick logo, blue/white styling and tool-card layout, with correct account, role
-and release information. New-listener health checks wait for Apache reload readiness
-instead of reporting a transient Connection Refused traceback.
+### New in 0.1.8: Blockly Dashboard
 
-## Changes in 0.1.3
+The tested Blockly Dashboard is now included in the full installer. It adds a Dashboard top-level tab with
+Setup, Info, Gauge and Graph folders, larger centered info/gauge defaults,
+and Open Dashboard. Blocks create info/gauge/graph widgets, update values, append
+samples, limit history, set gauge range, and set appearance/font properties.
+Dashboard-only designs do not open hardware or require simulator gadgets. Widgets
+are per-account and retain their values after Stop. Existing generic widget blocks
+remain compatible. Upload `CodyNick examples/blockly/dashboard_counter.codynick`
+in Block Coding, click Open Dashboard, then Run for a timer and graph demo.
+This upgrade includes all previously tested local Dashboard changes; the separate
+local patch is no longer needed. Accounts, saved designs and student files persist.
 
-Web administrator password resets and current-password-verified self-service changes,
-with confirmation, CSRF protection and affected-session invalidation. Authentication
-refresh no longer restarts a user's program, including terminal password changes.
-The installer creates its log file before launching the background worker and uses
-retrying log follow, avoiding the first-install "No such file" display race.
+### New in 0.1.7
 
-## Changes in 0.1.4
+Public welcome page retains the workshop photos. Start Creating opens Block
+Coding after login; other protected links also preserve their local destination.
+Bootstrap login uses a faded photo backdrop. The signed-in panel is a practical
+tool workspace with a faint photo watermark and the existing ribbon. The top-right
+account menu offers Change password and Sign out on desktop and mobile.
+The installer log viewer no longer inherits the setup lock, so an old tail
+process cannot block subsequent installations. Accounts and student work persist.
 
-Python IDE compact layout only at viewport widths of 760px and below. Files move
-into a toggled drawer that closes after file selection; Run and Stop stay in the
-visible toolbar. The compact Run label reads "Run"; desktop retains "Run this File".
-Editor/terminal sizing adapts to portrait, landscape and browser viewport changes.
-Desktop geometry above the breakpoint, script controls, account isolation and
-other tools are unchanged. Browser tests compare desktop bounds with the old layout
-and exercise real Run/Stop plus Files at phone and landscape sizes.
+### New in 0.1.6
 
-## Changes in 0.1.5: Blockly to gadget simulator
+Main Panel-only Bootstrap facelift based on the supplied design, with offline
+embedded images and styles, live account/role/version, real tool links and POST
+sign-out. Student accounts do not see user management. Login, password pages,
+editors, simulation and dashboard behavior are unchanged.
+
+Separate classroom edition based on CodyNick 0.11.0 (upstream commit 50539ea).
+Ubuntu Server x86-64 VM and ARM64; Python IDE, Blockly, sprites, gadget simulation,
+dashboard. No AI packages/models. No changes to the separate RPi edition.
+
+### Changes in 0.1.5: Blockly to gadget simulator
 
 In Block Coding, select **Simulator** under **Run on**, next to the design name.
 Choose **Open Simulator**, add the required gadgets to the simulation space, then
@@ -224,3 +189,40 @@ Supported: CJP LEDs/joystick/buzzer, standalone joystick, LED matrix, standalone
 seven-segment and ultrasonic devices, temperature, soil moisture, and Wi-Fi/IoT.
 Motion/RFID/keypad, legacy sensor aliases, library updates and unsupported device
 IDs are rejected clearly in Simulator mode rather than accessing physical hardware.
+
+### Changes in 0.1.4
+
+Python IDE compact layout only at viewport widths of 760px and below. Files move
+into a toggled drawer that closes after file selection; Run and Stop stay in the
+visible toolbar. The compact Run label reads "Run"; desktop retains "Run this File".
+Editor/terminal sizing adapts to portrait, landscape and browser viewport changes.
+Desktop geometry above the breakpoint, script controls, account isolation and
+other tools are unchanged. Browser tests compare desktop bounds with the old layout
+and exercise real Run/Stop plus Files at phone and landscape sizes.
+
+### Changes in 0.1.3
+
+Web administrator password resets and current-password-verified self-service changes,
+with confirmation, CSRF protection and affected-session invalidation. Authentication
+refresh no longer restarts a user's program, including terminal password changes.
+The installer creates its log file before launching the background worker and uses
+retrying log follow, avoiding the first-install "No such file" display race.
+
+### Changes in 0.1.2
+
+Administrator-only Users page with Add Student and an account list; no general
+root shell/sudo access is given to the web service. A fixed-action Unix socket
+broker validates administrator role, username and password and provisions students
+using the existing account setup. CSRF tokens protect account-creation forms.
+This is browser-role separation, not a hostile-Python sandbox: the earlier shared
+Linux-identity limitation remains. The main panel now uses the original RPi panel's
+CodyNick logo, blue/white styling and tool-card layout, with correct account, role
+and release information. New-listener health checks wait for Apache reload readiness
+instead of reporting a transient Connection Refused traceback.
+
+### Changes in 0.1.1
+
+Shared form-based sign-in/sign-out and one public address replace per-user public
+ports and browser Basic authentication. Existing 0.1.0 account passwords, files,
+designs and dashboard databases are retained. Old private services remain the same;
+only web listeners, login/routing, installer metadata, tests and guides changed.
