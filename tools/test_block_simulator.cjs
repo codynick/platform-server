@@ -10,7 +10,7 @@ const base=process.env.BASE_URL||'http://127.0.0.1';
   await Promise.all([page.waitForURL(base+'/'),page.click('button[type=submit]')]);
   await page.goto(base+'/blocks/');await page.waitForFunction(()=>typeof ExecutionTarget!=='undefined'&&typeof workspace!=='undefined'&&['Loaded','Saved','New workspace'].includes(document.querySelector('#workspaceStatus').textContent));
   await page.evaluate(()=>{
-   Blockly.serialization.workspaces.load({blocks:{languageVersion:0}},workspace);
+   Blockly.serialization.workspaces.load({blocks:{languageVersion:0,blocks:[]}},workspace);
    const xml=Blockly.utils.xml.textToDom(`<xml xmlns="https://developers.google.com/blockly/xml"><block type="cn_event_start"><statement name="DO"><block type="cn_rgb_matrix_set"><field name="led">0</field><field name="color">#00FF00</field><next><block type="cn_led_matrix_display_text"><field name="text">HELLO</field><field name="speed">'medium'</field></block></next></block></statement></block></xml>`);
    Blockly.Xml.domToWorkspace(xml,workspace);
   });
@@ -22,7 +22,7 @@ const base=process.env.BASE_URL||'http://127.0.0.1';
   await page.evaluate(()=>saveWorkspaceNow(true));
   await page.reload();await page.waitForFunction(()=>document.querySelector('#executionTarget')?.value==='simulator');
   // Named designs and downloaded/uploaded workspace data use the same serializer.
-  await page.evaluate(()=>{const snapshot=currentWorkspaceJson();if(snapshot.codynick_execution.target!=='simulator')throw Error('Mode not serialized');Blockly.serialization.workspaces.load({blocks:{languageVersion:0}},workspace);if(document.querySelector('#executionTarget').value!=='hardware')throw Error('Legacy mode not Hardware');Blockly.serialization.workspaces.load(snapshot,workspace);});
+  await page.evaluate(()=>{const snapshot=currentWorkspaceJson();if(snapshot.codynick_execution.target!=='simulator')throw Error('Mode not serialized');Blockly.serialization.workspaces.load({blocks:{languageVersion:0,blocks:[]}},workspace);if(document.querySelector('#executionTarget').value!=='hardware')throw Error('Legacy mode not Hardware');Blockly.serialization.workspaces.load(snapshot,workspace);});
   await page.evaluate(async()=>{
    await fetch('/code/?action=stop',{method:'POST',body:new URLSearchParams()});
    const state=await (await fetch('/simulation/state')).json();
