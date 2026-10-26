@@ -15,7 +15,7 @@
     "tests/test_multi.py": "4453e15625266eb5d972c21114744f97d70ce3568381e29148b2a4054c277262",
     "tests/test_panel.py": "a2d82ce824b0b78a08eac00a40fe251a53f859e3fdc717b6af07c122638dc18d",
     "tests/test_simulator_blocks.py": "55f0797d90125dca3ac9c1ed8c9a09fb08e48f6f7557789f75e3dc04a2996052",
-    "tests/vm_acceptance.py": "9e3dd9c3e6ceb2ef8b5a582a6f09ddd768c229bab336e49c2fd999d82d84095b",
+    "tests/vm_acceptance.py": "0ef696b1c8167c497320b2a53e29da8f84d21667c45f239a13000bc2948152c4",
     "tools/ci_accounts.py": "266088b654ae86cb12f23e28fe11939a1bf23e7c765995bcac393e57cdba52bc",
     "tools/import_panel.py": "f5d0b627a9520a871fcf2c02fed72c65e8ed5080b1a7e89fe51f83e9052cc6a3",
     "tools/preview.cjs": "fc3e697959c3e39bb720f954e4d27c35a39e9e6886d8bf05ce692c1ba9ccb776",

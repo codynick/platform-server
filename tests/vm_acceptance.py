@@ -163,7 +163,7 @@ admin_csrf = re.search(r'name="csrf" value="([a-f0-9]+)"', page).group(1)
 before = (DATA / 'bob/log.log').read_text()
 out = request(80, '/admin/password?user=' + student, 'alice', {'csrf':admin_csrf,'password':PASSWORD,'confirm':PASSWORD})
 assert ('Password updated for ' + student).encode() in out
-assert b'Username' in request(80, '/', student)
+assert b'Username' in request(80, '/code/', student)
 CLIENTS[student] = login(student)
 time.sleep(1.2)
 assert len((DATA / 'bob/log.log').read_text()) > len(before)
